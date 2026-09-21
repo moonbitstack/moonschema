@@ -22,5 +22,5 @@ description = "moonschema — JSON Schema validation for MoonBit: draft-04, draf
 preferred_target = "wasm-gc"
 
 import {
-  "moonbitstack/moonjson@0.2.0",
+  "moonbitstack/moonjson@0.3.0",
 }
