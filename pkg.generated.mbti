@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonschema"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let draft : Draft
+
+pub let output : Output
+
+// Errors
+
+// Types and methods
+pub(all) enum Draft {
+  Draft4
+  Draft6
+  Draft7
+  Draft2019
+  Draft2020
+} derive(Eq, @debug.Debug)
+pub fn Draft::equal(Self, Self) -> Bool
+pub fn Draft::not_equal(Self, Self) -> Bool
+pub fn Draft::of(StringView) -> Self?
+pub fn Draft::output(Self, &Logger) -> Unit
+pub fn Draft::to_repr(Self) -> @debug.Repr
+pub fn Draft::to_string(Self) -> String
+pub fn Draft::uri(Self) -> String
+pub impl Show for Draft
+
+pub(all) enum Output {
+  Flag
+  Basic
+  Detailed
+  Verbose
+} derive(Eq, @debug.Debug)
+pub fn Output::equal(Self, Self) -> Bool
+pub fn Output::not_equal(Self, Self) -> Bool
+pub fn Output::output(Self, &Logger) -> Unit
+pub fn Output::to_repr(Self) -> @debug.Repr
+pub fn Output::to_string(Self) -> String
+pub impl Show for Output
+
+// Type aliases
+
+// Traits

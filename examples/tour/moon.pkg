@@ -1,6 +1,6 @@
-// Everything this repository does, in one run: `moon run examples/tour`.
+// A tour of what moonschema does, runnable: `moon run examples/tour`.
 pkgtype(kind: "executable")
 
 import {
-  "moonbitstack/CHANGE-ME/lib",
+  "moonbitstack/moonschema",
 }

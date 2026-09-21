@@ -1,0 +1,8 @@
+// JSON Schema, https://json-schema.org — the specification is the `spec/`
+// submodule and the acceptance gate is the `suite/` one.
+//
+// This package validates. It does not parse JSON: a caller hands in a `Json`
+// tree, which `moonjson` reads.
+import {
+  "moonbitstack/moonschema",
+} for "test"

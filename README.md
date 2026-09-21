@@ -1,58 +1,90 @@
-# CHANGE-ME
+# moonschema
 
-One sentence saying what this is.
+JSON Schema validation for MoonBit. It validates; it does not parse JSON — a
+caller hands in a `Json` tree, which [`moonjson`](https://github.com/moonbitstack/moonjson)
+reads.
+
+> **Status: the repository is set up, the validator is not written yet.** What is
+> here is the version model, the specification and the official test suite as
+> submodules, and the plan. See the tracking list with the project.
 
 ```moonbit
-@lib.greet("moonbit")
+@moonschema.Draft::of("https://json-schema.org/draft/2020-12/schema")  // Some(2020-12)
+@moonschema.draft                                                      // the preset: 2020-12
 ```
 
-Run `moon run examples/tour` for the whole surface in one go.
+Run `moon run examples/tour` for what is there today.
 
-## Starting from this template
+## Versions
 
-1. `gh repo create moonbitstack/<name> --template moonbitstack/moonkit --public`
-2. Replace `CHANGE-ME` everywhere: `moon.mod` (name and repository), the two
-   `moon.pkg` files that import `lib`, and this file's title.
-3. Delete `bin/` if the repository ships no binary; delete `lib/` if it ships
-   only a binary. Most repositories here keep `lib/` and rename it to whatever
-   the package actually is — `base64/`, `sha2/`, `jwt/` — because a package is
-   named after what it does, not after its role.
-4. Fill in `keywords` and `description` in `moon.mod`. The description is what
-   mooncakes shows, so it says what the package is and what it is not.
-5. Write the specification link into every `moon.pkg`.
+Five released versions, all of them still in use:
 
-## What is here and what is not
+| Value | Version | Why it is here |
+|:--:|:--:|:--|
+| `Draft4` | draft-04 (2013) | What OpenAPI 3.0 profiles, and what much Java and Python tooling still emits |
+| `Draft6` | draft-06 (2017) | `$id` replaces `id`; `exclusiveMinimum` becomes a number |
+| `Draft7` | draft-07 (2018) | The most widely deployed version |
+| `Draft2019` | 2019-09 | Vocabularies, `$defs`, `$recursiveRef`, `unevaluatedProperties` |
+| `Draft2020` | 2020-12 | `$dynamicRef`, `prefixItems` — and what OpenAPI 3.1 **is** |
 
-| Carried | Why |
-|:--|:--|
-| `.github/workflows/` | GitHub does not inherit workflows; every repository needs its own copy |
-| `moon.mod`, `lib/`, `bin/`, `examples/tour/` | The module layout, with the library and the binary separated the way cargo separates them |
-| `.gitignore`, `.moonignore` | The second one exists because `.gitignore`'s `!.git*` would otherwise pull the whole object database into a published tarball |
-| `LICENSE` | Apache-2.0, the same across the organisation |
+`draft-03` is not here and will not be: it predates the `$` keywords and nothing
+has been written against it since 2010. The next release arrives as another
+value of this enum and a keyword table, not as a second validator.
 
-**Issue and pull-request templates are not here.** The organisation's `.github`
-repository supplies them to every repository that has none of its own; a copy
-here would shadow that one and then drift from it. A repository adds its own
-only when it needs something the organisation's does not cover.
+**A document is read at the version it names.** `$schema` wins over the `draft`
+argument, which wins over the preset — the same "more specific wins" rule the
+rest of this family publishes. A `$schema` URI this does not know answers `None`
+rather than a guess: a document written against something else is not a document
+to read at a version of our choosing.
 
-## The gate
+Both `http` and `https` spellings are accepted, with or without the trailing
+`#`, because both are found in the wild.
 
-Every commit passes this, with each exit code seen to be zero:
+## What it will be measured against
+
+The [official test suite](https://github.com/json-schema-org/JSON-Schema-Test-Suite)
+is the `suite/` submodule and the acceptance gate — **every case, not a
+selection**:
+
+| Version | Groups | Cases |
+|:--:|:--:|:--:|
+| draft-04 | 199 | 1009 |
+| draft-06 | 277 | 1354 |
+| draft-07 | 322 | 1832 |
+| 2019-09 | 449 | 2285 |
+| 2020-12 | 462 | 2329 |
+| **total** | **1709** | **8809** |
+
+A case that is skipped will say in the code why, and this README will say how
+many. The [specification](https://github.com/json-schema-org/json-schema-spec)
+is the `spec/` submodule; there is no official reference implementation, so the
+implementations read for comparison are named in the tracking list.
 
 ```bash
-moon clean && moon fmt && moon check --target all --deny-warn \
-  && moon build --target all && moon test --target all
+git submodule update --init --recursive
 ```
 
-Before a release, `moon info --target all && git diff --exit-code` as well: the
-generated interface is checked in, and a difference means the interface moved
-without anyone saying so.
+Neither submodule ships in the package: `.moonignore` excludes them, because a
+consumer installing this wants the validator and not the paperwork.
 
-## Releasing
+## What it will not do
 
-Push a signed tag `v<version>`. `release.yml` runs the tests first and publishes
-only if they pass and the organisation variable `MOONCAKES_PUBLISH` is `true`.
-The major version stays at 0.
+**Fetch a remote `$ref`.** A validator should not open sockets. There will be a
+seam for resolving references; the caller feeds it.
+
+**Assert `format` by default.** The specification makes `format` an annotation
+unless a caller asks otherwise, and so will this.
+
+**Hyper-schema.** That is a different specification.
+
+**Compile schemas to code.** Interpretation first; if it measures slow, that is
+the time to argue about it.
+
+## Install
+
+```bash
+moon add moonbitstack/moonschema
+```
 
 ## Licence
 

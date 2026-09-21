@@ -4,3 +4,9 @@
 .git/
 _build/
 target/
+
+# The specification and the official test suite are submodules: they are how CI
+# proves conformance, and they are several times the size of this library. A
+# consumer installing the package wants the validator, not the paperwork.
+spec/
+suite/
