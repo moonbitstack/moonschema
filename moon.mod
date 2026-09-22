@@ -1,6 +1,6 @@
 name = "moonbitstack/moonschema"
 
-version = "0.1.0"
+version = "0.2.0"
 
 readme = "README.md"
 
@@ -17,10 +17,6 @@ keywords = [
   "moonbit",
 ]
 
-description = "moonschema — JSON Schema validation for MoonBit: draft-04, draft-06, draft-07, 2019-09 and 2020-12, measured against the official JSON-Schema-Test-Suite. It validates; it does not parse JSON — that is moonjson."
+description = "moonschema — JSON Schema validation for MoonBit: draft-04, draft-06, draft-07, 2019-09 and 2020-12, measured against every case of the official JSON-Schema-Test-Suite. It validates; it does not parse JSON — that is moonjson — and it opens no sockets."
 
 preferred_target = "wasm-gc"
-
-import {
-  "moonbitstack/moonjson@0.3.0",
-}

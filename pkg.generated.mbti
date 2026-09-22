@@ -10,7 +10,19 @@ pub let draft : Draft
 
 pub let output : Output
 
+pub let unicode : String
+
 // Errors
+pub(all) suberror Refused {
+  Unknown(String)
+  Broken(at~ : String, why~ : String)
+} derive(Eq, @debug.Debug)
+pub fn Refused::equal(Self, Self) -> Bool
+pub fn Refused::not_equal(Self, Self) -> Bool
+pub fn Refused::output(Self, &Logger) -> Unit
+pub fn Refused::to_repr(Self) -> @debug.Repr
+pub fn Refused::to_string(Self) -> String
+pub impl Show for Refused
 
 // Types and methods
 pub(all) enum Draft {
@@ -29,6 +41,19 @@ pub fn Draft::to_string(Self) -> String
 pub fn Draft::uri(Self) -> String
 pub impl Show for Draft
 
+pub(all) struct Fault {
+  at : String
+  schema_at : String
+  keyword : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn Fault::equal(Self, Self) -> Bool
+pub fn Fault::not_equal(Self, Self) -> Bool
+pub fn Fault::output(Self, &Logger) -> Unit
+pub fn Fault::to_repr(Self) -> @debug.Repr
+pub fn Fault::to_string(Self) -> String
+pub impl Show for Fault
+
 pub(all) enum Output {
   Flag
   Basic
@@ -41,6 +66,13 @@ pub fn Output::output(Self, &Logger) -> Unit
 pub fn Output::to_repr(Self) -> @debug.Repr
 pub fn Output::to_string(Self) -> String
 pub impl Show for Output
+
+pub struct Schema {
+  // private fields
+}
+pub fn Schema::faults(Self, Json) -> Array[Fault]
+pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -> Self raise Refused
+pub fn Schema::valid(Self, Json) -> Bool
 
 // Type aliases
 

@@ -1,0 +1,17 @@
+// The acceptance gate: every case of the official JSON-Schema-Test-Suite, read
+// off disk and run against the validator.
+//
+// It is a module of its own, and the only one in this family written as a
+// `moon.mod.json`: a module that is never published can depend on a path, and
+// the newer `moon.mod` has no spelling for one. It is not published because it
+// is the measurement, not the library, and because it reads files — which the
+// library itself never does.
+supported_targets = "native"
+
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/x/fs",
+  "moonbitlang/core/json",
+}
+
+pkgtype(kind: "executable")

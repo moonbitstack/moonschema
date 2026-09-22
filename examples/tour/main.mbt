@@ -28,4 +28,27 @@ fn main {
   // the one OpenAPI 3.1 is defined against.
   println("preset version: \{@moonschema.draft}")
   println("preset output:  \{@moonschema.output}")
+
+  // A schema validates an instance, and says why when it does not.
+  let document : Json = {
+    "type": "object",
+    "properties": {
+      "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    },
+    "required": ["port"],
+  }
+  let schema = @moonschema.Schema::new(document) catch {
+    error => {
+      println(error)
+      return
+    }
+  }
+  for instance in ([{ "port": 12000 }, { "port": 0 }, {}] : Array[Json]) {
+    println(
+      instance.stringify() + "  ->  " + schema.valid(instance).to_string(),
+    )
+    for fault in schema.faults(instance) {
+      println("    " + fault.to_string())
+    }
+  }
 }

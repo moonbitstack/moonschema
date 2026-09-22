@@ -10,3 +10,8 @@ target/
 # consumer installing the package wants the validator, not the paperwork.
 spec/
 suite/
+
+# The acceptance gate is a module of its own, with its own dependencies and the
+# metaschemas it feeds the validator. It measures the library; it is not part of
+# it.
+gate/

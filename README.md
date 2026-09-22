@@ -4,16 +4,39 @@ JSON Schema validation for MoonBit. It validates; it does not parse JSON — a
 caller hands in a `Json` tree, which [`moonjson`](https://github.com/moonbitstack/moonjson)
 reads.
 
-> **Status: the repository is set up, the validator is not written yet.** What is
-> here is the version model, the specification and the official test suite as
-> submodules, and the plan. See the tracking list with the project.
-
 ```moonbit
-@moonschema.Draft::of("https://json-schema.org/draft/2020-12/schema")  // Some(2020-12)
-@moonschema.draft                                                      // the preset: 2020-12
+let schema = @moonschema.Schema::new(document)   // `document` is a Json tree
+schema.valid(instance)                           // the flag output: yes or no
+schema.faults(instance)                          // the basic output: every reason
+
+// A reference to another document reaches what the caller hands it, and nothing
+// else: this opens no sockets.
+@moonschema.Schema::new(document, remotes={ "https://example.test/int": other })
 ```
 
-Run `moon run examples/tour` for what is there today.
+Run `moon run examples/tour` for a worked example.
+
+## What it passes
+
+Every required case of the official suite, for all five versions:
+
+| Version | Cases | Passing |
+|:--:|:--:|:--:|
+| draft-04 | 618 | **618** |
+| draft-06 | 841 | **841** |
+| draft-07 | 929 | **929** |
+| 2019-09 | 1261 | **1261** |
+| 2020-12 | 1301 | **1301** |
+| **total** | **4950** | **4950** |
+
+Nothing is skipped and nothing is excused: the gate fails if a single case stops
+passing, and it fails just as loudly if a case listed as known-failing starts
+passing, because the list would then be describing something that is no longer
+so. The list is empty.
+
+The counts are the cases the suite calls required. The `optional/` directory —
+`format` assertions, big numbers beyond a double, non-BMP text — is not run, by
+the same reading of the specification that makes `format` an annotation.
 
 ## Versions
 
@@ -40,40 +63,34 @@ to read at a version of our choosing.
 Both `http` and `https` spellings are accepted, with or without the trailing
 `#`, because both are found in the wild.
 
-## What it will be measured against
+## What it is measured against
 
 The [official test suite](https://github.com/json-schema-org/JSON-Schema-Test-Suite)
-is the `suite/` submodule and the acceptance gate — **every case, not a
-selection**:
-
-| Version | Groups | Cases |
-|:--:|:--:|:--:|
-| draft-04 | 199 | 1009 |
-| draft-06 | 277 | 1354 |
-| draft-07 | 322 | 1832 |
-| 2019-09 | 449 | 2285 |
-| 2020-12 | 462 | 2329 |
-| **total** | **1709** | **8809** |
-
-A case that is skipped will say in the code why, and this README will say how
-many. The [specification](https://github.com/json-schema-org/json-schema-spec)
-is the `spec/` submodule; there is no official reference implementation, so the
-implementations read for comparison are named in the tracking list.
+is the `suite/` submodule and the acceptance gate — **every required case, not a
+selection**. It is run by the `gate/` module, which reads the suite off disk,
+feeds the validator the remote documents the suite refers to, and fails unless
+the result is exactly the table above. The library itself reads no files: the
+gate is where the caller lives.
 
 ```bash
 git submodule update --init --recursive
+cd gate && moon run . --target native
 ```
 
-Neither submodule ships in the package: `.moonignore` excludes them, because a
-consumer installing this wants the validator and not the paperwork.
+The [specification](https://github.com/json-schema-org/json-schema-spec) is the
+`spec/` submodule. Neither submodule, and not the gate, ships in the package:
+`.moonignore` excludes them, because a consumer installing this wants the
+validator and not the paperwork.
 
 ## What it will not do
 
-**Fetch a remote `$ref`.** A validator should not open sockets. There will be a
-seam for resolving references; the caller feeds it.
+**Fetch a remote `$ref`.** A validator should not open sockets. The seam is
+`remotes`: a map from URI to document, which the caller fills from wherever it
+keeps them. What is not handed over does not resolve, and a reference that
+resolves to nothing is a fault rather than a silent pass.
 
-**Assert `format` by default.** The specification makes `format` an annotation
-unless a caller asks otherwise, and so will this.
+**Assert `format`.** The specification makes `format` an annotation unless a
+caller asks otherwise, and this does not offer the otherwise yet.
 
 **Hyper-schema.** That is a different specification.
 

@@ -4,5 +4,10 @@
 // This package validates. It does not parse JSON: a caller hands in a `Json`
 // tree, which `moonjson` reads.
 import {
+  "moonbitlang/core/string",
+}
+
+import {
   "moonbitstack/moonschema",
+  "moonbitlang/core/json",
 } for "test"
