@@ -26,8 +26,8 @@ let known : Array[String] = []
 ///|
 /// What one version's run came to.
 struct Tally {
-  mut passed : Int
-  mut failed : Int
+  mut passed : Int32
+  mut failed : Int32
   first : Array[String]
 }
 
@@ -83,7 +83,7 @@ fn measure(
   draft : @moonschema.Draft,
   remotes : Map[String, Json],
 ) -> Tally {
-  let tally = { passed: 0, failed: 0, first: [] }
+  let tally = { passed: 0, failed: 0, first: [], }
   let root = suite + "/tests/" + directory
   let files = @fs.read_dir(root) catch {
     _ => {
@@ -91,6 +91,7 @@ fn measure(
       return tally
     }
   }
+  let files = files.to_owned()
   files.sort()
   for file in files {
     // `optional/` is a directory, and what is in it are the cases the
@@ -98,7 +99,9 @@ fn measure(
     if !file.has_suffix(".json") {
       continue
     }
-    let text = @fs.read_file_to_string(root + "/" + file) catch { _ => continue }
+    let text = @fs.read_file_to_string(root + "/" + file) catch {
+      _ => continue
+    }
     let groups = @json.parse(text) catch {
       _ => {
         tally.first.push(file + ": unreadable")
@@ -190,41 +193,33 @@ let meta_documents : Array[(String, String)] = [
   ("https://json-schema.org/draft/2019-09/schema", "2019-09.json"),
   ("https://json-schema.org/draft/2019-09/meta/core", "2019-09-core.json"),
   (
-    "https://json-schema.org/draft/2019-09/meta/applicator",
-    "2019-09-applicator.json",
+    "https://json-schema.org/draft/2019-09/meta/applicator", "2019-09-applicator.json",
   ),
   (
-    "https://json-schema.org/draft/2019-09/meta/validation",
-    "2019-09-validation.json",
+    "https://json-schema.org/draft/2019-09/meta/validation", "2019-09-validation.json",
   ),
   (
-    "https://json-schema.org/draft/2019-09/meta/meta-data",
-    "2019-09-meta-data.json",
+    "https://json-schema.org/draft/2019-09/meta/meta-data", "2019-09-meta-data.json",
   ),
   ("https://json-schema.org/draft/2019-09/meta/format", "2019-09-format.json"),
   ("https://json-schema.org/draft/2019-09/meta/content", "2019-09-content.json"),
   ("https://json-schema.org/draft/2020-12/schema", "2020-12.json"),
   ("https://json-schema.org/draft/2020-12/meta/core", "2020-12-core.json"),
   (
-    "https://json-schema.org/draft/2020-12/meta/applicator",
-    "2020-12-applicator.json",
+    "https://json-schema.org/draft/2020-12/meta/applicator", "2020-12-applicator.json",
   ),
   (
-    "https://json-schema.org/draft/2020-12/meta/validation",
-    "2020-12-validation.json",
+    "https://json-schema.org/draft/2020-12/meta/validation", "2020-12-validation.json",
   ),
   (
-    "https://json-schema.org/draft/2020-12/meta/meta-data",
-    "2020-12-meta-data.json",
+    "https://json-schema.org/draft/2020-12/meta/meta-data", "2020-12-meta-data.json",
   ),
   (
-    "https://json-schema.org/draft/2020-12/meta/format-annotation",
-    "2020-12-format-annotation.json",
+    "https://json-schema.org/draft/2020-12/meta/format-annotation", "2020-12-format-annotation.json",
   ),
   ("https://json-schema.org/draft/2020-12/meta/content", "2020-12-content.json"),
   (
-    "https://json-schema.org/draft/2020-12/meta/unevaluated",
-    "2020-12-unevaluated.json",
+    "https://json-schema.org/draft/2020-12/meta/unevaluated", "2020-12-unevaluated.json",
   ),
 ]
 
