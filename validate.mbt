@@ -120,8 +120,8 @@ pub struct Schema {
 /// the URI it is referred to by.
 pub fn Schema::new(
   document : Json,
-  draft? : Draft = draft,
-  remotes? : Map[String, Json] = Map::Map([]),
+  draft~ : Draft = draft,
+  remotes~ : Map[String, Json] = Map::Map([]),
 ) -> Schema raise Refused {
   let mut version = draft
   // Every keyword this validates with is in the validation vocabulary. A
@@ -204,7 +204,7 @@ priv struct Marks {
   /// The members an applicator validated.
   props : Set[String]
   /// The item positions one validated.
-  idx : Set[Int]
+  idx : Set[Int32]
   /// Whether one validated every item there is, however many arrive.
   mut all_items : Bool
 }

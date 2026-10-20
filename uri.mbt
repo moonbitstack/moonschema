@@ -193,12 +193,12 @@ fn directory_of(uri : String) -> String {
 }
 
 ///|
-fn is_alpha(code : Int) -> Bool {
+fn is_alpha(code : Int32) -> Bool {
   (code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)
 }
 
 ///|
-fn is_digit(code : Int) -> Bool {
+fn is_digit(code : Int32) -> Bool {
   code >= 0x30 && code <= 0x39
 }
 
@@ -293,7 +293,7 @@ fn unescape(token : String) -> String {
 ///|
 /// A reference token as the array index it spells, or `-1` when it spells none.
 /// A leading zero is not an index, which is what keeps `01` out of an array.
-fn index_of(token : String) -> Int {
+fn index_of(token : String) -> Int32 {
   if token.length() == 0 {
     return -1
   }
@@ -314,7 +314,7 @@ fn index_of(token : String) -> Int {
 }
 
 ///|
-fn nibble(code : Int) -> Int? {
+fn nibble(code : Int32) -> Int32? {
   if code >= 0x30 && code <= 0x39 {
     Some(code - 0x30)
   } else if code >= 0x41 && code <= 0x46 {

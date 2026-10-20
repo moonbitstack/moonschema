@@ -165,7 +165,7 @@ fn Schema::each_item(
   schemas : Array[Json],
   base : String,
   items : Array[Json],
-  from : Int,
+  from : Int32,
   at : String,
   spath : String,
   keyword : String,
@@ -202,7 +202,7 @@ fn Schema::rest_items(
   schema : Json,
   base : String,
   items : Array[Json],
-  from : Int,
+  from : Int32,
   at : String,
   spath : String,
   keyword : String,
@@ -642,7 +642,7 @@ fn multiple_of(number : Double, divisor : Double) -> Bool {
 ///|
 /// How many code points a string is, which is what a length is counted in: an
 /// emoji is one character however many units it takes to store.
-fn code_points(text : String) -> Int {
+fn code_points(text : String) -> Int32 {
   let mut count = 0
   for _ in text {
     count = count + 1
@@ -765,7 +765,7 @@ fn ecma(pattern : String) -> String {
 ///|
 /// The ranges the property escape starting at `from` names, and where it ends,
 /// or `None` when the escape is not one this knows.
-fn property(text : StringView, from : Int) -> (String, Int)? {
+fn property(text : StringView, from : Int32) -> (String, Int32)? {
   if from >= text.length() || text[from] != '{' {
     return None
   }
