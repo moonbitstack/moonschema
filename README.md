@@ -66,7 +66,7 @@ Both `http` and `https` spellings are accepted, with or without the trailing
 ## What it is measured against
 
 The [official test suite](https://github.com/json-schema-org/JSON-Schema-Test-Suite)
-is the `suite/` submodule and the acceptance gate — **every required case, not a
+is the `gate/suite/` submodule and the acceptance gate — **every required case, not a
 selection**. It is run by the `gate/` module, which reads the suite off disk,
 feeds the validator the remote documents the suite refers to, and fails unless
 the result is exactly the table above. The library itself reads no files: the
@@ -78,7 +78,7 @@ cd gate && moon run . --target native
 ```
 
 The [specification](https://github.com/json-schema-org/json-schema-spec) is the
-`spec/` submodule. Neither submodule, and not the gate, ships in the package:
+`gate/spec/` submodule. Neither submodule, and not the gate, ships in the package:
 `.moonignore` excludes them, because a consumer installing this wants the
 validator and not the paperwork.
 

@@ -3,7 +3,7 @@
 
 ///|
 /// Where the suite is, relative to this module.
-let suite : String = "../suite"
+let suite : String = "suite"
 
 ///|
 /// The five versions, each with the directory the suite keeps it in.
@@ -187,39 +187,39 @@ fn load_remotes() -> Map[String, Json] {
 ///|
 /// Each metaschema, by the URI a schema references it as.
 let meta_documents : Array[(String, String)] = [
-  ("http://json-schema.org/draft-04/schema", "draft-04.json"),
-  ("http://json-schema.org/draft-06/schema", "draft-06.json"),
-  ("http://json-schema.org/draft-07/schema", "draft-07.json"),
-  ("https://json-schema.org/draft/2019-09/schema", "2019-09.json"),
-  ("https://json-schema.org/draft/2019-09/meta/core", "2019-09-core.json"),
+  ("http://json-schema.org/draft-04/schema", "draft-04/schema.json"),
+  ("http://json-schema.org/draft-06/schema", "draft-06/schema.json"),
+  ("http://json-schema.org/draft-07/schema", "draft-07/schema.json"),
+  ("https://json-schema.org/draft/2019-09/schema", "2019-09/schema.json"),
+  ("https://json-schema.org/draft/2019-09/meta/core", "2019-09/core.json"),
   (
-    "https://json-schema.org/draft/2019-09/meta/applicator", "2019-09-applicator.json",
+    "https://json-schema.org/draft/2019-09/meta/applicator", "2019-09/applicator.json",
   ),
   (
-    "https://json-schema.org/draft/2019-09/meta/validation", "2019-09-validation.json",
+    "https://json-schema.org/draft/2019-09/meta/validation", "2019-09/validation.json",
   ),
   (
-    "https://json-schema.org/draft/2019-09/meta/meta-data", "2019-09-meta-data.json",
+    "https://json-schema.org/draft/2019-09/meta/meta-data", "2019-09/meta-data.json",
   ),
-  ("https://json-schema.org/draft/2019-09/meta/format", "2019-09-format.json"),
-  ("https://json-schema.org/draft/2019-09/meta/content", "2019-09-content.json"),
-  ("https://json-schema.org/draft/2020-12/schema", "2020-12.json"),
-  ("https://json-schema.org/draft/2020-12/meta/core", "2020-12-core.json"),
+  ("https://json-schema.org/draft/2019-09/meta/format", "2019-09/format.json"),
+  ("https://json-schema.org/draft/2019-09/meta/content", "2019-09/content.json"),
+  ("https://json-schema.org/draft/2020-12/schema", "2020-12/schema.json"),
+  ("https://json-schema.org/draft/2020-12/meta/core", "2020-12/core.json"),
   (
-    "https://json-schema.org/draft/2020-12/meta/applicator", "2020-12-applicator.json",
-  ),
-  (
-    "https://json-schema.org/draft/2020-12/meta/validation", "2020-12-validation.json",
+    "https://json-schema.org/draft/2020-12/meta/applicator", "2020-12/applicator.json",
   ),
   (
-    "https://json-schema.org/draft/2020-12/meta/meta-data", "2020-12-meta-data.json",
+    "https://json-schema.org/draft/2020-12/meta/validation", "2020-12/validation.json",
   ),
   (
-    "https://json-schema.org/draft/2020-12/meta/format-annotation", "2020-12-format-annotation.json",
+    "https://json-schema.org/draft/2020-12/meta/meta-data", "2020-12/meta-data.json",
   ),
-  ("https://json-schema.org/draft/2020-12/meta/content", "2020-12-content.json"),
   (
-    "https://json-schema.org/draft/2020-12/meta/unevaluated", "2020-12-unevaluated.json",
+    "https://json-schema.org/draft/2020-12/meta/format-annotation", "2020-12/format-annotation.json",
+  ),
+  ("https://json-schema.org/draft/2020-12/meta/content", "2020-12/content.json"),
+  (
+    "https://json-schema.org/draft/2020-12/meta/unevaluated", "2020-12/unevaluated.json",
   ),
 ]
 
