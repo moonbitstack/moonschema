@@ -13,9 +13,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           # The official test suite is a submodule and it is the gate. Without
@@ -37,10 +37,10 @@ jobs:
   publish:
     needs: test
     if: vars.MOONCAKES_PUBLISH == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: mooncakes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
