@@ -118,6 +118,13 @@ pub struct Schema {
 /// `draft` is the version to read it at when it does not name one; a `$schema`
 /// it does name wins. `remotes` are the documents a `$ref` may reach, each under
 /// the URI it is referred to by.
+///
+/// ```moonbit nocheck
+/// let schema = @moonschema.Schema::new(
+///   @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+/// )
+/// schema.valid(@json.parse("{\"id\": 1}"))   // true
+/// ```
 pub fn Schema::new(
   document : Json,
   draft~ : Draft = draft,
@@ -175,6 +182,12 @@ pub fn Schema::new(
 ///
 /// This is the flag output (§12.4.1): the cheapest answer, and the one a guard on
 /// a request wants. [`Schema::faults`] says why not.
+///
+/// ```moonbit nocheck
+/// let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+/// schema.valid(@json.parse("7"))          // true
+/// schema.valid(@json.parse("\"seven\""))   // false
+/// ```
 pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
   self.scope.clear()
   self.scope.push(self.base)
@@ -186,6 +199,16 @@ pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
 ///
 /// This is the basic output (§12.4.2), flattened: each fault says where in the
 /// instance it was, which keyword refused it, and where that keyword was.
+///
+/// ```moonbit nocheck
+/// let schema = @moonschema.Schema::new(
+///   @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+/// )
+/// for fault in schema.faults(@json.parse("0")) {
+///   println(fault.to_string())
+/// }
+/// // the instance: below the minimum (minimum at /minimum)
+/// ```
 pub fn Schema::faults(self : Schema, instance : Json) -> Array[Fault] {
   let faults : Array[Fault] = []
   self.scope.clear()

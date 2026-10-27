@@ -59,7 +59,8 @@ def docs_of(folder):
                 pending, block = [], []
                 continue
             if stripped.startswith("///"):
-                pending.append(stripped[3:].strip())
+                rest = stripped[3:]
+                pending.append(rest[1:] if rest.startswith(" ") else rest)
                 continue
             match = DECL.match(line)
             if match:
@@ -150,16 +151,30 @@ def inline(text):
 
 
 def prose(text):
-    """A doc comment as paragraphs, with `code` set as code."""
+    """A doc comment as paragraphs and examples, with `code` set as code."""
     if not text:
         return ""
     out = []
     for chunk in re.split(r"\n\s*\n", text):
+        lines = [line for line in chunk.split("\n") if line.strip()]
+        if not lines:
+            continue
+        if lines[0].strip().startswith("```"):
+            # A fenced block is an example, and keeps its own line breaks and
+            # indentation: it is code, not prose.
+            lang = lines[0].strip()[3:].strip() or "moonbit"
+            body = [line for line in lines[1:]]
+            if body and body[-1].strip() == "```":
+                body = body[:-1]
+            out.append(
+                f'<pre data-lang="{lang}">'
+                + html.escape("\n".join(body), quote=False)
+                + "</pre>"
+            )
+            continue
         # A doc comment is wrapped by hand; a paragraph is the whole run between
         # two blank comment lines, not one line of it.
-        paragraph = " ".join(part.strip() for part in chunk.split("\n") if part.strip())
-        if not paragraph:
-            continue
+        paragraph = " ".join(line.strip() for line in lines)
         out.append(f"<p>{inline(paragraph)}</p>")
     return "".join(out)
 
