@@ -53,6 +53,9 @@ function start() {
   let ready = false;
   let threads = [];
   let currentFaults = [];
+  // The case the reader last asked for, so a click that lands before the engine
+  // has loaded is not overwritten when it does.
+  let chosen = "port";
 
   /* ---------------------------------------------------------- the two trees */
 
@@ -176,6 +179,7 @@ function start() {
   /* ------------------------------------------------------------- the answer */
 
   function load(name) {
+    chosen = name;
     const c = CASES[name];
     const schemaRows = flatten(c.schema, "", 0, "", []);
     const instanceRows = flatten(c.instance, "", 0, "", []);
@@ -183,7 +187,11 @@ function start() {
     paint(instancePane, instanceRows);
     note.textContent = c.note;
 
-    if (!ready) return;
+    if (!ready) {
+      list.innerHTML =
+        '<li style="border:0;background:none;font-family:var(--mono);font-size:11.5px;color:var(--ink-3)">reading the compiled package…</li>';
+      return;
+    }
     const answer = JSON.parse(
       engine.check(JSON.stringify(c.schema), JSON.stringify(c.instance), c.draft),
     );
@@ -228,6 +236,6 @@ function start() {
     } catch {
       note.textContent = "The compiled package did not load, so the threads and faults are not drawn.";
     }
-    load("port");
+    load(chosen);
   })();
 }
