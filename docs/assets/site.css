@@ -135,6 +135,35 @@
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(160deg,var(--violet-deep),var(--rose))}
 ::-webkit-scrollbar-button{display:none}
 ::-webkit-scrollbar-corner{background:transparent}
+/* Inside the page a scrollbar is furniture, not decoration: the loud one is the
+   page's own, and a second one beside a list of contents competes with the
+   coloured edges the design uses on purpose. */
+.toc::-webkit-scrollbar,
+.pane textarea::-webkit-scrollbar,
+.sig::-webkit-scrollbar,
+.table-cloth::-webkit-scrollbar,
+.figure::-webkit-scrollbar{width:10px;height:10px}
+.toc::-webkit-scrollbar-track,
+.pane textarea::-webkit-scrollbar-track,
+.sig::-webkit-scrollbar-track,
+.table-cloth::-webkit-scrollbar-track,
+.figure::-webkit-scrollbar-track{background:transparent}
+.toc::-webkit-scrollbar-thumb,
+.pane textarea::-webkit-scrollbar-thumb,
+.sig::-webkit-scrollbar-thumb,
+.table-cloth::-webkit-scrollbar-thumb,
+.figure::-webkit-scrollbar-thumb{
+  background:var(--thread-2);
+  border:3px solid transparent;
+  background-clip:content-box;
+  border-radius:10px;
+}
+.toc::-webkit-scrollbar-thumb:hover,
+.pane textarea::-webkit-scrollbar-thumb:hover,
+.sig::-webkit-scrollbar-thumb:hover,
+.table-cloth::-webkit-scrollbar-thumb:hover,
+.figure::-webkit-scrollbar-thumb:hover{background:var(--ink-3);background-clip:content-box}
+
 pre::-webkit-scrollbar{height:10px;width:10px}
 pre::-webkit-scrollbar-track{background:transparent}
 pre::-webkit-scrollbar-thumb{
@@ -528,7 +557,8 @@ section:first-of-type{border-top:0}
   padding:9px 12px;
   border:1px solid var(--thread);
   border-left:2px solid var(--fail);
-  border-radius:8px;
+  /* the bar is on the left, so the two corners on that side stay square */
+  border-radius:0 8px 8px 0;
   background:var(--cloth);
   animation:slide-in .26s ease both;
 }
@@ -613,7 +643,8 @@ section:first-of-type{border-top:0}
 .card{
   position:relative;
   border:1px solid var(--thread);
-  border-radius:var(--r);
+  /* the selvedge runs along the top, so the top two corners are square */
+  border-radius:0 0 var(--r) var(--r);
   background:var(--cloth);
   padding:22px 22px 20px;
   overflow:hidden;
@@ -733,6 +764,8 @@ pre.out{
   color:var(--ink-2);
   border-color:var(--thread);
   border-left:2px solid var(--pass);
+  /* square on the side the bar is on; rounded everywhere else */
+  border-radius:0 12px 12px 0;
   font-size:12.5px;
   padding:30px 16px 12px;
   position:relative;
@@ -1024,7 +1057,7 @@ footer.site{
 
 .api-band{
   border:1px solid var(--thread);
-  border-radius:var(--r);
+  border-radius:0 0 var(--r) var(--r);
   background:var(--cloth);
   box-shadow:var(--shadow);
   padding:20px 22px;
