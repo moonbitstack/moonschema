@@ -1142,6 +1142,11 @@ footer.site{
   .hero{padding:40px 0 30px}
 }
 @media (width <= 640px){
+  /* the fault list stacks: the two pointers wrap under the message instead of
+     pushing the page wider than the screen */
+  .tm-list li{flex-wrap:wrap;row-gap:4px}
+  .tm-list .t{flex:1 1 auto;white-space:normal}
+  .tm-list .p{margin-left:0;flex-basis:100%;white-space:normal;font-size:10.5px}
   .bar{flex-wrap:wrap;row-gap:9px}
   nav.top{order:3;width:100%;justify-content:space-between;border-top:1px solid var(--thread);padding-top:9px}
   nav.top a{flex:1;text-align:center;font-size:10.5px;padding:6px 4px}
