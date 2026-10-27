@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Showcase — moonschema</title>
+<meta name="description" content="A fault is two places at once. The schema tree and the instance tree, a thread for every reason, and what unevaluatedProperties is really asking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script>try{const t=localStorage.getItem("moonschema-theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
+</head>
+<body>
+
+<header class="site">
+  <div class="bar">
+    <div class="brand">
+      <a href="./">moon<i>schema</i></a>
+      <small>JSON Schema · MoonBit</small>
+    </div>
+    <nav class="top" aria-label="Site">
+      <a href="./">Loom</a>
+      <a href="showcase.html" aria-current="page">Showcase</a>
+      <a href="guide.html">Guide</a>
+      <a href="api.html">API</a>
+    </nav>
+    <button class="icon-btn" data-theme-toggle aria-label="Switch theme" title="Switch theme">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0 2.5v1.8M12 2.7v1.8M21.3 12h-1.8M4.5 12H2.7M18.6 5.4l-1.3 1.3M6.7 17.3l-1.3 1.3M18.6 18.6l-1.3-1.3M6.7 6.7 5.4 5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <a class="icon-btn" href="https://github.com/moonbitstack/moonschema" aria-label="Source on GitHub" title="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero" style="padding-bottom:16px">
+    <div class="wrap">
+      <p class="eyebrow">Showcase</p>
+      <h1 style="font-size:clamp(38px,5vw,60px)">A fault is<br><em>two places at once.</em></h1>
+      <p class="lede" style="max-width:62ch">
+        One end is where the instance was, the other is the keyword that refused it. Everything on
+        this page is drawn from real runs: the faults are computed by the compiled package as the
+        page loads, and the threads are where those faults point.
+      </p>
+    </div>
+  </section>
+
+  <section id="map">
+    <div class="wrap">
+      <p class="eyebrow">The map</p>
+      <h2 class="display">One thread per reason</h2>
+      <p class="sec-intro">
+        Pick a case. Hover a reason to light its thread; the two nodes it joins are the two places
+        the message is talking about.
+      </p>
+
+      <div class="loom-controls">
+        <button class="chip-btn" data-case="port" aria-pressed="true">port</button>
+        <button class="chip-btn" data-case="order" aria-pressed="false">order</button>
+        <button class="chip-btn" data-case="refs" aria-pressed="false">$ref</button>
+        <span class="engine" id="tm-engine" title="the compiled package">engine</span>
+      </div>
+
+      <div class="threadmap" id="threadmap">
+        <div class="tm-side">
+          <p class="tm-title">schema</p>
+          <div id="tm-schema"></div>
+        </div>
+        <div class="tm-gap" aria-hidden="true"></div>
+        <div class="tm-side inst">
+          <p class="tm-title">instance</p>
+          <div id="tm-instance"></div>
+        </div>
+        <svg class="tm-svg" id="tm-threads" aria-hidden="true"></svg>
+      </div>
+
+      <ul class="tm-list" id="tm-list"></ul>
+      <p class="loom-note" id="tm-note"></p>
+      <div class="legend">
+        <span><i></i> a fault, from the schema keyword to the instance node</span>
+        <span>hover a reason above to pick one out</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="marks">
+    <div class="wrap">
+      <p class="eyebrow">The hard keyword</p>
+      <h2 class="display">What was never evaluated</h2>
+      <p class="sec-intro">
+        <code>unevaluatedProperties</code> is the one keyword that cannot be answered from the
+        schema alone. It asks what every other keyword — and every in-place applicator it reached —
+        has already looked at. A branch of <code>allOf</code> that validated hands its members over;
+        a branch that failed hands over nothing.
+      </p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 880 330" role="img" aria-label="Two allOf branches evaluate id and total; note is evaluated by nobody, so unevaluatedProperties refuses it.">
+          <defs>
+            <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0 8 4 0 8z" fill="var(--ink-3)"/>
+            </marker>
+          </defs>
+
+          <text x="10" y="8" class="dg-label">THE SCHEMA</text>
+          <rect x="10" y="18" width="150" height="34" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="85" y="40" text-anchor="middle" class="dg-code">allOf</text>
+          <path d="M85 52 85 74" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#arrow)" fill="none"/>
+
+          <rect x="10" y="76" width="250" height="58" rx="8" fill="var(--cloth)" stroke="var(--violet)"/>
+          <text x="26" y="99" class="dg-title">branch 0</text>
+          <text x="26" y="120" class="dg-code">properties: { id }</text>
+
+          <rect x="10" y="150" width="250" height="58" rx="8" fill="var(--cloth)" stroke="var(--teal)"/>
+          <text x="26" y="173" class="dg-title">branch 1</text>
+          <text x="26" y="194" class="dg-code">properties: { total }</text>
+
+          <rect x="10" y="234" width="250" height="58" rx="8" fill="var(--cloth)" stroke="var(--fail)"/>
+          <text x="26" y="257" class="dg-title">unevaluatedProperties</text>
+          <text x="26" y="278" class="dg-code">false</text>
+
+          <path d="M260 105 C 380 105, 410 92, 548 92" stroke="var(--violet)" stroke-width="1.4" fill="none"/>
+          <path d="M260 179 C 380 179, 410 144, 548 144" stroke="var(--teal)" stroke-width="1.4" fill="none"/>
+          <path d="M260 263 C 380 263, 410 196, 548 196" stroke="var(--fail)" stroke-width="1.4" stroke-dasharray="4 3" fill="none"/>
+
+          <text x="300" y="96" class="dg-label">id evaluated</text>
+          <text x="300" y="170" class="dg-label">total evaluated</text>
+          <text x="300" y="254" class="dg-label" fill="var(--fail)">evaluated by nobody</text>
+
+          <rect x="556" y="70" width="180" height="44" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="572" y="97" class="dg-code">"id": "ORD-12"</text>
+          <rect x="556" y="122" width="180" height="44" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="572" y="149" class="dg-code">"total": 0</text>
+          <rect x="556" y="174" width="180" height="44" rx="8" fill="var(--cloth)" stroke="var(--fail)" stroke-dasharray="4 3"/>
+          <text x="572" y="201" class="dg-code">"note": "gift"</text>
+
+          <text x="556" y="58" class="dg-label">THE INSTANCE</text>
+        </svg>
+        <figcaption>
+          Two branches, two members evaluated. The third member was evaluated by nobody, so the
+          keyword at the bottom is the only one left to refuse it.
+        </figcaption>
+      </figure>
+
+      <p class="code-cap">the run this diagram is drawn from</p>
+      <pre class="out" data-lang="text">/email: no instance validates against false (schema at /unevaluatedProperties)</pre>
+      <p>
+        The keyword is <code>schema</code> and the message is about <code>false</code>, because the
+        schema in question is the boolean <code>false</code> — a schema that refuses everything.
+        Written as <code>"unevaluatedProperties": { "type": "string" }</code> the same position
+        would say <code>not of type string</code> instead.
+      </p>
+
+      <div class="note">
+        <span class="mk">note</span>
+        <div>
+          The order matters. Everything that can evaluate something runs first, and the
+          <code>unevaluated*</code> keywords run last, on what is left. That is why they cannot be
+          written before the applicators they ask about.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="base">
+    <div class="wrap">
+      <p class="eyebrow">Addressing</p>
+      <h2 class="display">Where a reference points</h2>
+      <p class="sec-intro">
+        A <code>$ref</code> is resolved against the base URI in effect — RFC 3986, the same rules a
+        browser follows for a relative link. Which means <code>"money"</code> does not mean a
+        key called money; it means a document beside this one.
+      </p>
+
+      <figure class="figure">
+        <svg viewBox="0 0 880 296" role="img" aria-label="Three references and what each resolves to: a relative name is merged onto the base directory, a fragment stays in the same document.">
+          <defs>
+            <marker id="a2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0 8 4 0 8z" fill="var(--ink-3)"/>
+            </marker>
+          </defs>
+          <text x="10" y="12" class="dg-label">THE REFERENCE</text>
+          <text x="250" y="12" class="dg-label">THE BASE IN FORCE</text>
+          <text x="580" y="12" class="dg-label">WHAT IT RESOLVES TO</text>
+          <rect x="10" y="24" width="160" height="40" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="26" y="49" class="dg-code">"money"</text>
+          <rect x="250" y="24" width="250" height="40" rx="8" fill="var(--cloth)" stroke="var(--violet)"/>
+          <text x="266" y="49" class="dg-code">https://example.test/order</text>
+          <path d="M178 44 242 44" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="210" y="35" class="dg-label" text-anchor="middle">against</text>
+          <path d="M508 44 572 44" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="540" y="35" class="dg-label" text-anchor="middle">merge</text>
+          <rect x="580" y="24" width="290" height="40" rx="8" fill="var(--cloth)" stroke="var(--rose)"/>
+          <text x="596" y="49" class="dg-code">https://example.test/money</text>
+          <text x="580" y="82" class="dg-label">a relative name is merged onto the directory of the base</text>
+          <line x1="10" y1="98" x2="870" y2="98" stroke="var(--thread)" stroke-width="1"/>
+          <rect x="10" y="116" width="160" height="40" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="26" y="141" class="dg-code">"#/$defs/port"</text>
+          <rect x="250" y="116" width="250" height="40" rx="8" fill="var(--cloth)" stroke="var(--violet)"/>
+          <text x="266" y="141" class="dg-code">https://example.test/order</text>
+          <path d="M178 136 242 136" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="210" y="127" class="dg-label" text-anchor="middle">keeps</text>
+          <path d="M508 136 572 136" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="540" y="127" class="dg-label" text-anchor="middle">as is</text>
+          <rect x="580" y="116" width="290" height="40" rx="8" fill="var(--cloth)" stroke="var(--teal)"/>
+          <text x="596" y="141" class="dg-code">the pointer, in this document</text>
+          <text x="580" y="174" class="dg-label">the base is kept, and nothing outside this document is looked for</text>
+          <line x1="10" y1="190" x2="870" y2="190" stroke="var(--thread)" stroke-width="1"/>
+          <rect x="10" y="208" width="160" height="40" rx="8" fill="var(--cloth-2)" stroke="var(--thread-2)"/>
+          <text x="26" y="233" class="dg-code">"int"</text>
+          <rect x="250" y="208" width="250" height="40" rx="8" fill="var(--cloth)" stroke="var(--violet)"/>
+          <text x="266" y="233" class="dg-code">https://example.test/a/b</text>
+          <path d="M178 228 242 228" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="210" y="219" class="dg-label" text-anchor="middle">against</text>
+          <path d="M508 228 572 228" stroke="var(--ink-3)" stroke-width="1" marker-end="url(#a2)" fill="none"/>
+          <text x="540" y="219" class="dg-label" text-anchor="middle">append</text>
+          <rect x="580" y="208" width="290" height="40" rx="8" fill="var(--cloth)" stroke="var(--teal)"/>
+          <text x="596" y="233" class="dg-code">https://example.test/a/int</text>
+          <text x="580" y="266" class="dg-label">the last segment of the base is replaced by the name</text>
+        </svg>
+        <figcaption>
+          Relative names resolve like links. A fragment beginning with <code>/</code> is a JSON
+          Pointer into a document, and a document is only reachable when the caller has handed it
+          over.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <div><div class="mark">moonschema<small>JSON Schema for MoonBit</small></div></div>
+    <nav aria-label="Footer">
+      <a href="https://github.com/moonbitstack/moonschema">GitHub</a>
+      <a href="./">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="api.html">API</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonschema">mooncakes</a>
+    </nav>
+    <div class="stamp">Apache-2.0 · <span data-year>2026</span></div>
+  </div>
+</footer>
+
+<script type="module" src="assets/page.js"></script>
+<script type="module" src="assets/threadmap.js"></script>
+</body>
+</html>

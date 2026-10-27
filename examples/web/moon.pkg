@@ -1,0 +1,10 @@
+// The site's engine: `check` is called from `docs/assets/playground.js`, so this
+// package is a library with a JavaScript export rather than an executable.
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/core/json",
+}
+
+options(
+  link: { "js": { "exports": [ "check" ], "format": "esm" } },
+)

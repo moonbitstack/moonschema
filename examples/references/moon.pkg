@@ -1,0 +1,7 @@
+// References, local and remote.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/core/json",
+}

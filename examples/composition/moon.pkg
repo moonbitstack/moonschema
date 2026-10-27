@@ -1,0 +1,7 @@
+// Composition: applicators and what they leave over.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/core/json",
+}

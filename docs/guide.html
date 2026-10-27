@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide — moonschema</title>
+<meta name="description" content="From one schema to the fine print: reading a schema, faults, versions, objects, arrays, text, numbers, composition, references and refusals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script>try{const t=localStorage.getItem("moonschema-theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
+</head>
+<body>
+
+<header class="site">
+  <div class="bar">
+    <div class="brand">
+      <a href="./">moon<i>schema</i></a>
+      <small>JSON Schema · MoonBit</small>
+    </div>
+    <nav class="top" aria-label="Site">
+      <a href="./">Loom</a>
+      <a href="showcase.html">Showcase</a>
+      <a href="guide.html" aria-current="page">Guide</a>
+      <a href="api.html">API</a>
+    </nav>
+    <button class="icon-btn" data-theme-toggle aria-label="Switch theme" title="Switch theme">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0 2.5v1.8M12 2.7v1.8M21.3 12h-1.8M4.5 12H2.7M18.6 5.4l-1.3 1.3M6.7 17.3l-1.3 1.3M18.6 18.6l-1.3-1.3M6.7 6.7 5.4 5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <a class="icon-btn" href="https://github.com/moonbitstack/moonschema" aria-label="Source on GitHub" title="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </div>
+</header>
+
+<main class="wrap doc">
+
+  <aside class="toc" aria-label="Contents">
+    <p class="label">Contents</p>
+    <ol>
+      <li><a href="#verdict">A verdict</a></li>
+      <li><a href="#faults">When it says no</a></li>
+      <li><a href="#versions">Which version</a></li>
+      <li><a href="#objects">Objects</a></li>
+      <li><a href="#arrays">Arrays</a></li>
+      <li><a href="#text">Text</a></li>
+      <li><a href="#numbers">Numbers</a></li>
+      <li><a href="#composition">Composition</a></li>
+      <li><a href="#references">References</a></li>
+      <li><a href="#refusals">Refusals</a></li>
+      <li><a href="#limits">Where it stops</a></li>
+    </ol>
+  </aside>
+
+  <div class="page">
+
+    <section id="verdict">
+      <p class="eyebrow">01 · Install and answer</p>
+      <h2>A verdict</h2>
+      <p class="lead">
+        One package, one type to read a document with, two questions to ask of an instance.
+        Everything below runs in a project with this package and nothing else.
+      </p>
+
+      <pre data-lang="bash">$ moon add moonbitstack/moonschema</pre>
+
+      <p>
+        A schema is a <code>Json</code> tree. The package does not parse JSON — that is a caller's
+        job, and the core library's <code>@json.parse</code> does it.
+      </p>
+
+      <pre data-lang="moonbit">fn main raise {
+  let schema = @moonschema.Schema::new(
+    @json.parse("{ \"type\": \"integer\" }"),
+  )
+  println(schema.valid(@json.parse("7")))
+  println(schema.valid(@json.parse("\"seven\"")))
+}</pre>
+      <pre class="out" data-lang="text">true
+false</pre>
+
+      <p>
+        <code>Schema::new</code> reads the document once and raises if it cannot — see
+        <a href="#refusals">refusals</a>. After that, <code>valid</code> answers a yes or a no for
+        any instance, and <code>faults</code> answers the same question with the reasons.
+      </p>
+
+      <div class="note">
+        <span class="mk">reading</span>
+        <div>
+          A schema is read, not compiled: keywords are looked at as the instance walks past them.
+          The cost of reading is paid once, by <code>Schema::new</code>, and the same schema
+          validates as many instances as you like.
+        </div>
+      </div>
+    </section>
+
+    <section id="faults">
+      <p class="eyebrow">02 · The basic output</p>
+      <h2>When it says no</h2>
+      <p>
+        A fault is a plain struct with four fields. Everything a message needs is in them: where the
+        instance was, which keyword refused it, what that keyword had to say, and where in the
+        schema the keyword sits.
+      </p>
+
+      <pre data-lang="moonbit">fn main raise {
+  let person = @moonschema.Schema::new(
+    @json.parse(
+      (
+        #|{ "type": "object",
+        #|  "properties": { "name": { "type": "string", "minLength": 1 } },
+        #|  "required": ["name"] }
+      ),
+    ),
+  )
+  for fault in person.faults(@json.parse("{}")) {
+    println(fault.to_string())
+  }
+  for fault in person.faults(@json.parse("{\"name\": \"\"}")) {
+    println(fault.to_string())
+  }
+}</pre>
+      <pre class="out" data-lang="text">the instance: missing name (required at /required)
+/name: shorter than allowed (minLength at /properties/name/minLength)</pre>
+
+      <div class="table-cloth" style="margin:22px 0 18px">
+        <table class="sheet">
+          <thead><tr><th>Field</th><th>Means</th></tr></thead>
+          <tbody>
+            <tr><td><code>at</code></td><td>Where in the instance, as a JSON Pointer (RFC 6901). Empty for the instance itself.</td></tr>
+            <tr><td><code>keyword</code></td><td>The keyword that refused it — <code>minLength</code>, <code>required</code>, <code>$ref</code>.</td></tr>
+            <tr><td><code>message</code></td><td>What that keyword had to say, in one clause.</td></tr>
+            <tr><td><code>schema_at</code></td><td>Where in the schema, as a JSON Pointer, following the walk as it went.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        A missing member is a fault of the object, not of the member, so <code>at</code> is the
+        empty string and <code>to_string</code> calls it <em>the instance</em>.
+      </p>
+      <p>
+        <code>schema_at</code> records the path the walk took. When the walk followed a reference,
+        the reference is in the path: a fault reached through <code>$ref</code> is reported at
+        <code>/properties/port/$ref/maximum</code>, which is the route, not the definition.
+      </p>
+
+      <div class="note">
+        <span class="mk">note</span>
+        <div>
+          <code>valid</code> stops at the first refusal, because that is all a yes or no needs.
+          <code>faults</code> keeps every reason. Ask for one or the other, not both, and the work
+          matches the question.
+        </div>
+      </div>
+    </section>
+
+    <section id="versions">
+      <p class="eyebrow">03 · Five of them</p>
+      <h2>Which version a document is</h2>
+      <p>
+        <code>Draft</code> has five values. <code>Draft::uri</code> prints the <code>$schema</code>
+        a document would write; <code>Draft::of</code> reads one back.
+      </p>
+
+      <pre data-lang="moonbit">println(@moonschema.Draft::Draft7.uri())
+println(
+  match @moonschema.Draft::of("http://json-schema.org/draft-07/schema#"[:]) {
+    Some(d) => d.to_string()
+    None => "no version"
+  },
+)
+println(@moonschema.draft)</pre>
+      <pre class="out" data-lang="text">http://json-schema.org/draft-07/schema#
+draft-07
+2020-12</pre>
+
+      <p>
+        Three things decide the version, and the most specific wins: a <code>$schema</code> in the
+        document, then the <code>draft</code> argument to <code>Schema::new</code>, then the preset
+        <code>@moonschema.draft</code>. A document that names a version is read at that version
+        whatever the argument says.
+      </p>
+
+      <pre data-lang="moonbit">let named = @json.parse(
+  (
+    #|{ "$schema": "http://json-schema.org/draft-04/schema#",
+    #|  "maximum": 10, "exclusiveMaximum": true }
+  ),
+)
+let schema = @moonschema.Schema::new(named, draft=@moonschema.Draft::Draft2020)
+println(schema.valid(Json::number(10.0)))</pre>
+      <pre class="out" data-lang="text">false</pre>
+
+      <p>
+        That <code>false</code> is draft-04 talking: the flag makes <code>maximum</code> exclusive.
+        Read at 2020-12 the same document would let ten through, because there the flag is not a
+        number and asserts nothing. This is why the document has the last word.
+      </p>
+      <p>
+        A URI this does not know is <code>None</code>, not a guess — including
+        <code>draft-03</code>, which predates the <code>$</code> keywords. Both
+        <code>http</code> and <code>https</code> spellings are accepted, with or without the
+        trailing <code>#</code>.
+      </p>
+    </section>
+
+    <section id="objects">
+      <p class="eyebrow">04 · Members</p>
+      <h2>Objects</h2>
+      <p>
+        Four keywords read the same object and have to agree on which held each of them:
+        <code>properties</code>, <code>patternProperties</code>,
+        <code>additionalProperties</code> and <code>propertyNames</code>. A name that a member of
+        <code>properties</code> covers belongs to it; a name a pattern matched belongs to the
+        pattern; only what neither covered is additional.
+      </p>
+
+      <pre data-lang="moonbit">let headers = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "properties": { "id": { "type": "string" } },
+      #|  "patternProperties": { "^x-": { "type": "string" } },
+      #|  "additionalProperties": { "type": "integer" },
+      #|  "required": ["id"],
+      #|  "dependentRequired": { "id": ["rev"] } }
+    ),
+  ),
+)
+for fault in headers.faults(
+  @json.parse("{\"id\": 7, \"x-trace\": 9, \"n\": true}"),
+) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/id: not of type string (type at /properties/id/type)
+/x-trace: not of type string (type at /patternProperties/^x-/type)
+/n: not of type integer (type at /additionalProperties/type)
+the instance: missing rev (dependentRequired at /dependentRequired/id)</pre>
+
+      <p>
+        <code>propertyNames</code> applies a schema to the names rather than to the values, and
+        reports a fault at the member it objected to:
+      </p>
+
+      <pre data-lang="moonbit">let keys = @moonschema.Schema::new(
+  @json.parse("{ \"propertyNames\": { \"pattern\": \"^[a-z]+$\" } }"),
+)
+for fault in keys.faults(@json.parse("{\"User Name\": 1}")) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/User Name: does not match the pattern (pattern at /propertyNames/pattern)</pre>
+
+      <p>
+        <code>dependencies</code> is the older spelling of the pair: an array of names is
+        <code>dependentRequired</code>, a schema is <code>dependentSchemas</code>. A document is
+        read at the version that has the spelling it uses, which is the whole reason for
+        <a href="#versions">naming a version</a>.
+      </p>
+    </section>
+
+    <section id="arrays">
+      <p class="eyebrow">05 · Items</p>
+      <h2>Arrays</h2>
+      <p>
+        In 2020-12 a list of schemas for the leading items is <code>prefixItems</code> and
+        <code>items</code> is the schema for everything after it. <code>contains</code> looks for
+        matches anywhere, and 2019-09 added <code>minContains</code> and
+        <code>maxContains</code> to say how many.
+      </p>
+
+      <pre data-lang="moonbit">let batch = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "type": "array",
+      #|  "prefixItems": [{ "type": "string" }],
+      #|  "items": { "type": "integer" },
+      #|  "minItems": 2, "uniqueItems": true,
+      #|  "contains": { "const": 0 }, "minContains": 1 }
+    ),
+  ),
+)
+for fault in batch.faults(@json.parse("[\"a\", 1, 1]")) {
+  println(fault.to_string())
+}
+println(batch.valid(@json.parse("[\"a\", 0]")))</pre>
+      <pre class="out" data-lang="text">the instance: two items are equal (uniqueItems at /uniqueItems)
+the instance: fewer matching items than required (contains at /contains)
+true</pre>
+
+      <p>
+        <code>uniqueItems</code> compares by value, not by spelling: <code>1</code> and
+        <code>1.0</code> are one item, and two objects are one item when they hold the same members
+        in any order.
+      </p>
+      <p>
+        Before 2020-12 the leading list is written <code>items: [...]</code> and the remainder is
+        <code>additionalItems</code>. Written the old way, <code>items</code> read at 2020-12 is not
+        a schema and asserts nothing — the <a href="#versions">versions</a> example prints that
+        table.
+      </p>
+    </section>
+
+    <section id="text">
+      <p class="eyebrow">06 · Strings</p>
+      <h2>Text</h2>
+      <p>
+        A length is counted in code points, not bytes and not UTF-16 units: an emoji is one
+        character however much storage it takes. A length is not a grapheme count either — that is
+        a different question, and the specification does not ask it.
+      </p>
+
+      <pre data-lang="moonbit">let word = @moonschema.Schema::new(
+  @json.parse("{ \"type\": \"string\", \"minLength\": 2, \"maxLength\": 3 }"),
+)
+println(word.valid(Json::string("<span class='w2'>中</span>")))  // false — one code point
+println(word.valid(Json::string("a")))   // false — one as well
+println(word.valid(Json::string("<span class='w2'>🇨🇳</span>")))  // true — a flag is two</pre>
+      <pre class="out" data-lang="text">false
+true
+true</pre>
+
+      <p>
+        A flag emoji is two regional indicators, so it is two code points and fits where one letter
+        would not. That is the specification's arithmetic, not an accident of this library.
+      </p>
+      <p>
+        <code>pattern</code> is ECMA-262 syntax, and it searches: a match anywhere is a match. The
+        shorthands <code>\d</code>, <code>\w</code> and <code>\s</code> work, and so do property
+        escapes such as <code>\p{Letter}</code> and <code>\p{Nd}</code>, spliced in from the
+        Unicode 15.1 tables the package carries.
+      </p>
+
+      <pre data-lang="moonbit">let letters = @moonschema.Schema::new(
+  @json.parse("{ \"pattern\": \"^\\\\p{Letter}+$\" }"),
+)
+println(letters.valid(Json::string("Ünïcode")))
+println(letters.valid(Json::string("Ün1code")))</pre>
+      <pre class="out" data-lang="text">true
+false</pre>
+
+      <p>
+        A property this does not know — a script, a binary property — is left as it was written, and
+        the engine underneath refuses the pattern. A schema's own mistake then refuses instances
+        rather than admitting every one of them:
+      </p>
+
+      <pre data-lang="moonbit">let han = @moonschema.Schema::new(
+  @json.parse("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }"),
+)
+println(han.valid(Json::string("<span class='w2'>中</span>")))
+println(han.valid(Json::string("abc")))</pre>
+      <pre class="out" data-lang="text">false
+false</pre>
+    </section>
+
+    <section id="numbers">
+      <p class="eyebrow">07 · Numbers</p>
+      <h2>Numbers</h2>
+      <p>
+        <code>integer</code> means a number with nothing after the decimal point, which is what JSON
+        leaves it as — <code>1</code> and <code>1.0</code> are the same number, so both are
+        integers.
+      </p>
+
+      <pre data-lang="moonbit">let whole = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+println(whole.valid(@json.parse("1.0")))
+println(whole.valid(@json.parse("1.5")))</pre>
+      <pre class="out" data-lang="text">true
+false</pre>
+
+      <p>
+        <code>multipleOf</code> allows the error a binary float carries. <code>0.0075</code>
+        divided by <code>0.0001</code> is <code>74.999999999999986</code> in a double, and calling
+        that not a multiple would be a fact about the arithmetic rather than about the numbers.
+      </p>
+
+      <pre data-lang="moonbit">let steps = @moonschema.Schema::new(
+  @json.parse("{ \"type\": \"number\", \"multipleOf\": 0.0001 }"),
+)
+println(steps.valid(@json.parse("0.0075")))
+println(steps.valid(@json.parse("0.00751")))</pre>
+      <pre class="out" data-lang="text">true
+false</pre>
+
+      <p>
+        The bounds are the plain ones. From draft-06 <code>exclusiveMinimum</code> and
+        <code>exclusiveMaximum</code> are numbers that stand on their own; at draft-04 they are
+        flags beside <code>minimum</code> and <code>maximum</code>, and the version decides which
+        reading applies.
+      </p>
+    </section>
+
+    <section id="composition">
+      <p class="eyebrow">08 · Schemas of schemas</p>
+      <h2>Composition, and what is left over</h2>
+      <p>
+        <code>allOf</code> applies every branch and reports every branch that refused.
+        <code>anyOf</code> passes when one branch does, so a failing branch is not a fault of the
+        instance — only every branch failing is. <code>oneOf</code> wants exactly one, and says how
+        many matched when it did not get what it wanted.
+      </p>
+
+      <pre data-lang="moonbit">let one = @moonschema.Schema::new(
+  @json.parse("{ \"oneOf\": [ { \"type\": \"integer\" }, { \"minimum\": 0 } ] }"),
+)
+for fault in one.faults(Json::number(3.0)) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">the instance: 2 branches validated, not one (oneOf at /oneOf)</pre>
+
+      <p>
+        <code>if</code> never fails on its own: it picks <code>then</code> or <code>else</code>, and
+        the reasons come from whichever it picked — so a fault points into <code>/then/…</code> or
+        <code>/else/…</code>, which says immediately which arm was taken.
+      </p>
+
+      <pre data-lang="moonbit">let shipping = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "properties": { "country": {}, "postcode": {} },
+      #|  "if": { "properties": { "country": { "const": "US" } } },
+      #|  "then": { "properties": { "postcode": { "pattern": "^[0-9]{5}$" } } },
+      #|  "else": { "properties": { "postcode": { "minLength": 3 } } } }
+    ),
+  ),
+)
+for fault in shipping.faults(
+  @json.parse("{\"country\": \"US\", \"postcode\": \"9410\"}"),
+) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/postcode: does not match the pattern (pattern at /then/properties/postcode/pattern)</pre>
+
+      <p>
+        <code>unevaluatedProperties</code> is the one that needs a note. It does not know what
+        <code>properties</code> it can see; it asks what every other keyword in the same schema —
+        and every in-place applicator it reached — evaluated. A branch of <code>allOf</code> that
+        validated contributes its members, which is what makes it the way to close a composed
+        object.
+      </p>
+
+      <pre data-lang="moonbit">let closed = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "allOf": [
+      #|    { "properties": { "name": { "type": "string" } } },
+      #|    { "properties": { "age": { "type": "integer" } } } ],
+      #|  "unevaluatedProperties": false }
+    ),
+  ),
+)
+for fault in closed.faults(
+  @json.parse("{\"name\": \"Ada\", \"email\": \"a@b.test\"}"),
+) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/email: no instance validates against false (schema at /unevaluatedProperties)</pre>
+
+      <p>
+        The keyword is <code>schema</code> there because the schema in question is the boolean
+        <code>false</code>, and <code>false</code> refuses everything. A branch that fails
+        contributes nothing, so the properties it would have covered stay unevaluated — which is
+        what the specification asks for and what a naive implementation gets wrong.
+      </p>
+    </section>
+
+    <section id="references">
+      <p class="eyebrow">09 · Addressing</p>
+      <h2>References</h2>
+      <p>
+        <code>$defs</code> holds schemas to refer to and <code>$ref</code> reaches one by JSON
+        Pointer. A reference is resolved against the base URI in effect — the document's
+        <code>$id</code>, or the one a surrounding subschema gave it.
+      </p>
+
+      <pre data-lang="moonbit">let order = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "$defs": { "port": { "type": "integer", "maximum": 65535 } },
+      #|  "properties": { "port": { "$ref": "#/$defs/port" } } }
+    ),
+  ),
+)
+for fault in order.faults(@json.parse("{\"port\": 70000}")) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/port: above the maximum (maximum at /properties/port/$ref/maximum)</pre>
+
+      <p>
+        A subschema with its own <code>$id</code> is a resource of its own, and references inside
+        it resolve against that URI. <code>$anchor</code> names a place inside a document by a plain
+        word, which is what a hand-written reference usually wants.
+      </p>
+
+      <pre data-lang="moonbit">let money = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "$id": "https://example.test/order",
+      #|  "$defs": { "money": { "$id": "money", "type": "object",
+      #|    "properties": { "cents": { "type": "integer" } },
+      #|    "required": ["cents"] } },
+      #|  "properties": { "total": { "$ref": "money" } } }
+    ),
+  ),
+)
+for fault in money.faults(@json.parse("{\"total\": {\"cents\": \"12.50\"}}")) {
+  println(fault.to_string())
+}</pre>
+      <pre class="out" data-lang="text">/total/cents: not of type integer (type at /properties/total/$ref/properties/cents/type)</pre>
+
+      <p>
+        <code>"money"</code> is relative, so it lands beside the document at
+        <code>https://example.test/money</code> — not inside it. That is RFC 3986 resolution, and it
+        is the part of references that surprises people.
+      </p>
+
+      <p>
+        A reference to another document resolves only when that document is handed over. There is
+        no fetching: the package opens no sockets, so a reference to what it was not given lands
+        nowhere, and landing nowhere is a fault.
+      </p>
+
+      <pre data-lang="moonbit">let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+
+let alone = @moonschema.Schema::new(remote)
+for fault in alone.faults(Json::number(1.0)) {
+  println(fault.to_string())
+}
+
+let fed = @moonschema.Schema::new(
+  remote,
+  remotes={
+    "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
+  },
+)
+println(fed.valid(Json::number(1.0)))</pre>
+      <pre class="out" data-lang="text">the instance: reference resolves to nothing ($ref at /$ref)
+true</pre>
+
+      <p>
+        The map is keyed by the URI the reference names. Anything the caller has — a file, a
+        database row, a literal — can be put in it; nothing else can reach the validator.
+      </p>
+    </section>
+
+    <section id="refusals">
+      <p class="eyebrow">10 · Not reading</p>
+      <h2>Refusals</h2>
+      <p>
+        <code>Schema::new</code> raises <code>Refused</code> when it cannot make sense of a
+        document. Today that is a <code>$schema</code> naming a version nobody here knows:
+      </p>
+
+      <pre data-lang="moonbit">let refused = try {
+  @moonschema.Schema::new(
+    @json.parse("{ \"$schema\": \"https://example.test/v9\" }"),
+  ) |> ignore
+  "read it anyway"
+} catch {
+  @moonschema.Unknown(uri) => "refused " + uri
+  _ => "another refusal"
+}
+println(refused)</pre>
+      <pre class="out" data-lang="text">refused https://example.test/v9</pre>
+
+      <p>
+        This is the difference between a fault and a refusal, and it is worth keeping straight: a
+        refusal is a schema this cannot read, a fault is an instance that does not conform. Guessing
+        at a version would turn the second into the first without saying so.
+      </p>
+      <p>
+        A boolean is a schema too. <code>true</code> admits everything and <code>false</code>
+        refuses everything, which is how a branch is closed or opened without a keyword:
+      </p>
+
+      <pre data-lang="moonbit">println(@moonschema.Schema::new(Json::boolean(true)).valid(Json::null()))
+println(@moonschema.Schema::new(Json::boolean(false)).valid(Json::null()))</pre>
+      <pre class="out" data-lang="text">true
+false</pre>
+    </section>
+
+    <section id="limits">
+      <p class="eyebrow">11 · Scope</p>
+      <h2>Where it stops</h2>
+      <p>
+        <code>format</code> is an annotation in the specification unless a caller asks otherwise, and
+        this does not offer the otherwise yet — so <code>format</code> asserts nothing and a schema
+        that relies on it is a schema with a hole. Validate the value with
+        <code>pattern</code>, or check it yourself after the fact.
+      </p>
+      <p>
+        Three more things are deliberately outside: hyper-schema, which is a different
+        specification; fetching, for the reason given under <a href="#references">references</a>;
+        and compiling a schema to code, which is a decision to make when there is a measurement,
+        not before.
+      </p>
+      <p>
+        The four output forms of the specification have names here — <code>Flag</code>,
+        <code>Basic</code>, <code>Detailed</code>, <code>Verbose</code> — and two of them are
+        produced: <code>valid</code> is the flag, <code>faults</code> the basic, flattened. The
+        preset <code>@moonschema.output</code> is <code>Flag</code>, because the common case is a
+        guard that wants a yes or a no.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap foot">
+    <div><div class="mark">moonschema<small>JSON Schema for MoonBit</small></div></div>
+    <nav aria-label="Footer">
+      <a href="https://github.com/moonbitstack/moonschema">GitHub</a>
+      <a href="./">Home</a>
+      <a href="showcase.html">Showcase</a>
+      <a href="api.html">API</a>
+      <a href="https://mooncakes.io/docs/moonbitstack/moonschema">mooncakes</a>
+    </nav>
+    <div class="stamp">Apache-2.0 · <span data-year>2026</span></div>
+  </div>
+</footer>
+
+<script type="module" src="assets/page.js"></script>
+</body>
+</html>

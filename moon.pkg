@@ -2,7 +2,7 @@
 // submodule and the acceptance gate is the `suite/` one.
 //
 // This package validates. It does not parse JSON: a caller hands in a `Json`
-// tree, which `moonjson` reads.
+// tree, which the core library reads.
 import {
   "moonbitlang/core/string",
 }

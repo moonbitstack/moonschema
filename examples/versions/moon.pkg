@@ -1,0 +1,7 @@
+// One document, five versions: the differences that matter, side by side.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/core/json",
+}

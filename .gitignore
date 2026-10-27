@@ -3,3 +3,7 @@
 !.moonignore
 _*
 target/
+
+# The documentation site's engine is compiled in the docs workflow and copied
+# here; a built artefact is not source.
+docs/engine/

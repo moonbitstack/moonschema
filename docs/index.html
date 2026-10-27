@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moonschema — JSON Schema validation for MoonBit</title>
+<meta name="description" content="Validate a JSON document against a JSON Schema in MoonBit: five versions, faults that name the place in the instance and the place in the schema, references that reach only the documents you hand over.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<script>try{const t=localStorage.getItem("moonschema-theme");if(t)document.documentElement.dataset.theme=t}catch{}</script>
+</head>
+<body>
+
+<header class="site">
+  <div class="bar">
+    <div class="brand">
+      <a href="./">moon<i>schema</i></a>
+      <small>JSON Schema · MoonBit</small>
+    </div>
+    <nav class="top" aria-label="Site">
+      <a href="#loom" aria-current="page">Loom</a>
+      <a href="showcase.html">Showcase</a>
+      <a href="guide.html">Guide</a>
+      <a href="api.html">API</a>
+    </nav>
+    <button class="icon-btn" data-theme-toggle aria-label="Switch theme" title="Switch theme">
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0 2.5v1.8M12 2.7v1.8M21.3 12h-1.8M4.5 12H2.7M18.6 5.4l-1.3 1.3M6.7 17.3l-1.3 1.3M18.6 18.6l-1.3-1.3M6.7 6.7 5.4 5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <a class="icon-btn" href="https://github.com/moonbitstack/moonschema" aria-label="Source on GitHub" title="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Five versions, one walk</p>
+        <h1>Every document,<br><em>thread by thread.</em></h1>
+        <p class="lede">
+          <b>moonschema</b> validates a JSON instance against a JSON Schema. You hand it a
+          <code>Json</code> tree; it answers yes or no, and when the answer is no it says where —
+          in the instance, and in the schema. Five versions of the specification, one validator,
+          no sockets.
+        </p>
+        <div class="install">
+          <span class="sigil">$</span> moon add moonbitstack/moonschema
+          <button data-copy="self" data-copy-text="moon add moonbitstack/moonschema">copy</button>
+        </div>
+        <div class="cta">
+          <a class="btn" href="#loom">Try the loom <span class="arrow">→</span></a>
+          <a class="btn ghost" href="guide.html">Read the guide</a>
+        </div>
+      </div>
+      <div class="loom-art" aria-hidden="true">
+        <div class="field"></div>
+        <svg viewBox="0 0 380 340" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="rose-thread" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--rose)" stop-opacity="0"/>
+              <stop offset=".3" stop-color="var(--rose)" stop-opacity=".9"/>
+              <stop offset=".78" stop-color="var(--amber)" stop-opacity=".8"/>
+              <stop offset="1" stop-color="var(--amber)" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="teal-thread" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="var(--teal)" stop-opacity="0"/>
+              <stop offset=".34" stop-color="var(--teal)" stop-opacity=".85"/>
+              <stop offset=".8" stop-color="var(--violet)" stop-opacity=".7"/>
+              <stop offset="1" stop-color="var(--violet)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke-linecap="round">
+            <path d="M152 -6c-9 70 5 142-5 208s7 96-1 132" stroke="url(#rose-thread)" stroke-width="6" opacity=".18"/>
+            <path d="M152 -6c-9 70 5 142-5 208s7 96-1 132" stroke="url(#rose-thread)" stroke-width="1.5"/>
+            <path d="M282 -6c-9 68 5 140-5 206s7 98-1 134" stroke="url(#teal-thread)" stroke-width="6" opacity=".15"/>
+            <path d="M282 -6c-9 68 5 140-5 206s7 98-1 134" stroke="url(#teal-thread)" stroke-width="1.3"/>
+          </g>
+          <g font-family="JetBrains Mono, monospace" font-size="9.5" fill="currentColor" letter-spacing="1.2" style="color:var(--ink-3)">
+            <circle cx="146" cy="318" r="2.2" fill="var(--rose)"/>
+            <text x="146" y="336" text-anchor="middle">at</text>
+            <circle cx="274" cy="318" r="2.2" fill="var(--teal)"/>
+            <text x="274" y="336" text-anchor="middle">schema_at</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section id="loom">
+    <div class="wrap">
+      <p class="eyebrow">In the browser, on the real engine</p>
+      <h2 class="display">The loom</h2>
+      <p class="sec-intro">
+        A schema on the left, an instance on the right. Edit either: the package compiled to
+        JavaScript validates as you type, and prints every reason it had.
+      </p>
+
+      <div class="loom-controls">
+        <button class="chip-btn" data-preset="port" aria-pressed="true">port</button>
+        <button class="chip-btn" data-preset="order" aria-pressed="false">order</button>
+        <button class="chip-btn" data-preset="refs" aria-pressed="false">$ref</button>
+        <button class="chip-btn" data-preset="text" aria-pressed="false">pattern</button>
+        <button class="chip-btn" data-preset="old" aria-pressed="false">draft-04</button>
+        <label class="loom-hint" for="draft-menu">read at</label>
+        <select id="draft-menu" class="chip-btn" aria-label="Version">
+          <option value="https://json-schema.org/draft/2020-12/schema" selected>2020-12</option>
+          <option value="https://json-schema.org/draft/2019-09/schema">2019-09</option>
+          <option value="http://json-schema.org/draft-07/schema#">draft-07</option>
+          <option value="http://json-schema.org/draft-06/schema#">draft-06</option>
+          <option value="http://json-schema.org/draft-04/schema#">draft-04</option>
+        </select>
+        <span class="engine" id="engine-state" title="the compiled package">engine</span>
+      </div>
+
+      <div class="loom">
+        <div class="pane">
+          <div class="pane-head"><span class="tag">warp</span><span class="name">schema.json</span></div>
+          <div class="editor">
+            <div class="gutter" id="schema-gutter" aria-hidden="true">1</div>
+            <textarea id="schema-text" spellcheck="false" aria-label="Schema JSON"></textarea>
+          </div>
+        </div>
+        <div class="pane">
+          <div class="pane-head"><span class="tag">weft</span><span class="name">instance.json</span></div>
+          <div class="editor">
+            <div class="gutter" id="instance-gutter" aria-hidden="true">1</div>
+            <textarea id="instance-text" spellcheck="false" aria-label="Instance JSON"></textarea>
+          </div>
+        </div>
+        <div class="verdict" style="grid-column:1/-1">
+          <div class="verdict-head">
+            <span class="said pass" id="said"><span></span>valid</span>
+            <span class="meta" id="meta"></span>
+          </div>
+          <ul class="faults" id="fault-list"></ul>
+        </div>
+      </div>
+      <p class="loom-note" id="loom-note"></p>
+    </div>
+  </section>
+
+  <section id="numbers">
+    <div class="wrap">
+      <div class="numbers" data-reveal>
+        <div class="number">
+          <span class="n">5</span>
+          <span class="k">versions</span>
+          <span class="d">draft-04 through 2020-12, one walk over the keywords.</span>
+        </div>
+        <div class="number">
+          <span class="n">4</span>
+          <span class="k">fields in a fault</span>
+          <span class="d">where in the instance, which keyword, what it said, where in the schema.</span>
+        </div>
+        <div class="number">
+          <span class="n">0</span>
+          <span class="k">sockets</span>
+          <span class="d">A reference reaches the documents you hand over, and nothing else.</span>
+        </div>
+        <div class="number">
+          <span class="n">2</span>
+          <span class="k">calls to a verdict</span>
+          <span class="d"><code>Schema::new</code> once, then <code>valid</code> or <code>faults</code>.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="what">
+    <div class="wrap">
+      <p class="eyebrow">What it holds to</p>
+      <h2 class="display">Six things it does properly</h2>
+      <p class="sec-intro">
+        The specification is large and most of it is small print. These are the parts that decide
+        whether a validator is useful or merely present.
+      </p>
+
+      <div class="cards">
+        <article class="card" data-reveal>
+          <h3><span class="k">$schema</span> The document decides</h3>
+          <p>
+            A document is read at the version it names, whatever the argument says. The argument is
+            the fallback for a document that names nothing — never an override of one that does.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">Fault</span> Two places, not one</h3>
+          <p>
+            A fault names the place in the instance and the keyword that refused it, so a message
+            can point at both. <code>at</code> is a JSON Pointer; so is <code>schema_at</code>.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">remotes</span> No sockets</h3>
+          <p>
+            A validator should not fetch. A <code>$ref</code> reaches a map of documents you fill
+            in; what is not handed over does not resolve, and that is a fault, not a pass.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">unevaluated*</span> Annotations carry</h3>
+          <p>
+            What an applicator evaluated is passed to its neighbours, so
+            <code>unevaluatedProperties</code> sees the branches of an <code>allOf</code> — which
+            is the only way to close a composed object.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">pattern</span> ECMA-262, not POSIX</h3>
+          <p>
+            <code>\d</code>, <code>\w</code>, <code>\s</code> and <code>\p{Letter}</code> work as
+            the specification writes them, the property escapes spliced in from the Unicode 15.1
+            tables the package carries.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">Refused</span> Refuse, don't guess</h3>
+          <p>
+            A <code>$schema</code> naming a version this does not know is refused when the schema
+            is read — not read at a version of someone else's choosing.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="versions">
+    <div class="wrap">
+      <p class="eyebrow">The five</p>
+      <h2 class="display">Versions, and why each is here</h2>
+      <p class="sec-intro">
+        Five released versions are still in use, so five are here. The value on the left is the
+        enum; the URI is what a document writes in <code>$schema</code>.
+      </p>
+      <div class="table-cloth" data-reveal>
+        <table class="sheet">
+          <thead>
+            <tr><th>Draft</th><th>$schema</th><th>What it is</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="v">Draft4</span></td>
+              <td><code>json-schema.org/draft-04/schema#</code></td>
+              <td>What OpenAPI 3.0 profiles, and what much Java and Python tooling still emits.</td>
+            </tr>
+            <tr>
+              <td><span class="v">Draft6</span></td>
+              <td><code>json-schema.org/draft-06/schema#</code></td>
+              <td><code>$id</code> replaces <code>id</code>; <code>exclusiveMinimum</code> becomes a number.</td>
+            </tr>
+            <tr>
+              <td><span class="v">Draft7</span></td>
+              <td><code>json-schema.org/draft-07/schema#</code></td>
+              <td>The most widely deployed version.</td>
+            </tr>
+            <tr>
+              <td><span class="v">Draft2019</span></td>
+              <td><code>json-schema.org/draft/2019-09/schema</code></td>
+              <td>Vocabularies, <code>$defs</code>, <code>$recursiveRef</code>, <code>unevaluatedProperties</code>.</td>
+            </tr>
+            <tr>
+              <td><span class="v">Draft2020</span></td>
+              <td><code>json-schema.org/draft/2020-12/schema</code></td>
+              <td><code>$dynamicRef</code>, <code>prefixItems</code> — and what OpenAPI 3.1 is.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="loom-note">Both <code>http</code> and <code>https</code> spellings are accepted, with or without the trailing <code>#</code>.</p>
+    </div>
+  </section>
+
+  <section id="seams">
+    <div class="wrap">
+      <p class="eyebrow">Where the cloth ends</p>
+      <h2 class="display">What it will not do</h2>
+      <p class="sec-intro">
+        Four decisions, each with a reason, so that nobody has to discover them by finding the
+        hole.
+      </p>
+      <div class="cards">
+        <article class="card" data-reveal>
+          <h3><span class="k">no</span> Fetch a remote <code>$ref</code></h3>
+          <p>A validator that opens sockets is a validator that blocks, retries and fails. The seam is <code>remotes</code>: a map from URI to document, filled by the caller.</p>
+        </article>
+        <article class="card" data-reveal>
+          <h3><span class="k">no</span> Assert <code>format</code></h3>
+          <p>The specification makes <code>format</code> an annotation unless a caller asks otherwise. This does not offer the otherwise yet, so nothing is asserted.</p>
+        </article>
+        <article class="card" data-reveal>
+          <h3><span class="k">no</span> Hyper-schema</h3>
+          <p>Links and media types are a different specification. This one is validation.</p>
+        </article>
+        <article class="card" data-reveal>
+          <h3><span class="k">no</span> Compile schemas to code</h3>
+          <p>Interpretation first. If it measures slow, that is the time to argue about it — not before there is a number.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="examples">
+    <div class="wrap">
+      <p class="eyebrow">Runnable</p>
+      <h2 class="display">Programs to read</h2>
+      <p class="sec-intro">
+        Each is a small program with its real output, and runs with <code>moon run examples/…</code>.
+      </p>
+      <div class="examples">
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/examples/tour">
+          <span class="num">01</span><span class="nm">tour</span>
+          <span class="why">a schema, three instances, the faults they earn</span>
+        </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/examples/versions">
+          <span class="num">02</span><span class="nm">versions</span>
+          <span class="why">one document read at each of the five</span>
+        </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/examples/references">
+          <span class="num">03</span><span class="nm">references</span>
+          <span class="why">$defs, $id, $anchor, and a document handed in</span>
+        </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/examples/composition">
+          <span class="num">04</span><span class="nm">composition</span>
+          <span class="why">allOf, oneOf, if/then/else, unevaluated</span>
+        </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/examples/web">
+          <span class="num">05</span><span class="nm">web</span>
+          <span class="why">the engine this page runs</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="wrap foot">
+      <div>
+        <div class="mark">moonschema<small>JSON Schema for MoonBit</small></div>
+      </div>
+      <nav aria-label="Footer">
+        <a href="https://github.com/moonbitstack/moonschema">GitHub</a>
+        <a href="guide.html">Guide</a>
+        <a href="api.html">API</a>
+        <a href="showcase.html">Showcase</a>
+        <a href="https://mooncakes.io/docs/moonbitstack/moonschema">mooncakes</a>
+      </nav>
+      <div class="stamp">Apache-2.0 · <span data-year>2026</span></div>
+    </div>
+  </footer>
+
+</main>
+
+<script type="module" src="assets/page.js"></script>
+<script type="module" src="assets/playground.js"></script>
+</body>
+</html>

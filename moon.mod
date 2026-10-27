@@ -17,4 +17,4 @@ keywords = [
   "moonbit",
 ]
 
-description = "moonschema — JSON Schema validation for MoonBit: draft-04, draft-06, draft-07, 2019-09 and 2020-12, measured against every case of the official JSON-Schema-Test-Suite. It validates; it does not parse JSON — that is moonjson — and it opens no sockets."
+description = "moonschema — JSON Schema validation for MoonBit: draft-04, draft-06, draft-07, 2019-09 and 2020-12. A schema is read, an instance is walked against it, and a fault says where in both. It validates; it does not parse JSON, and it opens no sockets."
