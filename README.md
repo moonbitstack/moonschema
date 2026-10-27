@@ -119,7 +119,9 @@ println(schema.valid(Json::number(1.0)))   // true
 
 ## Examples
 
-Each is a program with its output, runnable with `moon run examples/<name>`.
+The first four are programs with their output, run with `moon run examples/<name>`. The last is
+the library the documentation site compiles to JavaScript, built with
+`moon build --target js --release examples/web`.
 
 <table>
 <tr><th>Example</th><th>Shows</th></tr>
