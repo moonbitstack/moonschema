@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="moonschema">
+  <defs>
+    <linearGradient id="warp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a184ff"/>
+      <stop offset=".55" stop-color="#ff2d87"/>
+      <stop offset="1" stop-color="#00a598"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#191324"/>
+  <g stroke="url(#warp)" stroke-width="1.1" fill="none">
+    <path d="M8 5c-1.2 6 .8 12 0 17s.6 4 0 5"/>
+    <path d="M13 5c-1.2 6 .8 12 0 17s.6 4 0 5"/>
+    <path d="M18 5c-1.2 6 .8 12 0 17s.6 4 0 5"/>
+    <path d="M23 5c-1.2 6 .8 12 0 17s.6 4 0 5"/>
+  </g>
+  <circle cx="6.4" cy="21" r="1.7" fill="#ff2d87"/>
+  <circle cx="24.6" cy="13" r="1.5" fill="#00a598"/>
+</svg>
