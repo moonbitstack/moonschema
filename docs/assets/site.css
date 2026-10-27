@@ -606,6 +606,10 @@ section:first-of-type{border-top:0}
 /* ---------------------------------------------------------------- card grid */
 
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+/* four of a kind: one row on a wide screen, two by two below it */
+.cards.four{grid-template-columns:repeat(auto-fit,minmax(232px,1fr))}
+/* four of a kind: one row on a wide screen, two by two below it */
+.cards.four{grid-template-columns:repeat(auto-fit,minmax(232px,1fr))}
 .card{
   position:relative;
   border:1px solid var(--thread);
@@ -649,7 +653,7 @@ section:first-of-type{border-top:0}
   from{background-position:0 0}
   to{background-position:220% 0}
 }
-.card h3{font-family:var(--sans);font-size:16.5px;font-weight:600;margin:0 0 7px;display:flex;align-items:center;gap:9px}
+.card h3{font-family:var(--sans);font-size:16.5px;font-weight:600;margin:0 0 7px;display:flex;align-items:baseline;gap:9px}
 .card h3 .k{
   font-family:var(--mono);
   font-size:10px;
@@ -964,7 +968,7 @@ pre.out::before{
 
 /* ------------------------------------------------------------------ examples */
 
-.examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:12px}
+.examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px}
 .example{
   display:grid;
   grid-template-columns:auto 1fr;
