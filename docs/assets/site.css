@@ -1198,3 +1198,5 @@ footer.site{
   .foot{flex-direction:column;gap:18px}
   .loom-hint{display:none}
 }
+
+html, button, input, textarea, select { font-variant-ligatures: no-contextual; }

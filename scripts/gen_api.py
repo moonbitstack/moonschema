@@ -36,7 +36,7 @@ MEMBER = re.compile(r"^\s+([A-Za-z_]\w*)\s*((?::|\().*)?$")
 
 def sources(folder):
     """The `.mbt` files of a package, tests and generated interfaces excluded."""
-    base = ROOT / folder
+    base = ROOT / "src" / folder
     for path in sorted(base.glob("*.mbt")):
         if path.name.endswith("_test.mbt") or path.name.endswith("_wbtest.mbt"):
             continue
@@ -89,7 +89,7 @@ def docs_of(folder):
 
 def items_of(folder):
     """Declarations from the interface file, in the order it lists them."""
-    path = ROOT / folder / "pkg.generated.mbti"
+    path = ROOT / "src" / folder / "pkg.generated.mbti"
     lines = path.read_text(encoding="utf-8").splitlines()
     items, block = [], None
     for line in lines:

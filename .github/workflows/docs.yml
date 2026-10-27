@@ -38,11 +38,11 @@ jobs:
 
       - name: build the library for the loom
         run: |
-          moon build --target js --release examples/web
+          moon build --target js --release src/examples/web
           mkdir -p docs/engine
           cp _build/js/release/build/moonbitstack/moonschema/examples/web/web.js docs/engine/moonschema.js
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: docs
 
@@ -54,4 +54,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

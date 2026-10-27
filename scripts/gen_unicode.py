@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write `unicode.mbt`: the code point ranges of every Unicode General_Category,
+"""Write `src/unicode.mbt`: the code point ranges of every Unicode General_Category,
 as the character-class bodies a `\\p{...}` escape is rewritten into.
 
 The data is Python's own Unicode database, so the version this was generated
@@ -131,7 +131,7 @@ def main():
             lines.append('  "%s": "%s",' % (name, text))
     lines.append("}")
     lines.append("")
-    out = ROOT / "unicode.mbt"
+    out = ROOT / "src" / "unicode.mbt"
     io.open(out, "w", encoding="utf-8", newline="\n").write("\n".join(lines))
     total = sum(len(v) for v in found.values())
     print("wrote %s (%d categories, %d ranges, %d bytes)"
