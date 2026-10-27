@@ -162,7 +162,9 @@ def prose(text):
         if lines[0].strip().startswith("```"):
             # A fenced block is an example, and keeps its own line breaks and
             # indentation: it is code, not prose.
-            lang = lines[0].strip()[3:].strip() or "moonbit"
+            # `moon fmt` writes the fence as ```moonbit nocheck; the first word
+            # is the language and the rest is an instruction to the compiler.
+            lang = (lines[0].strip()[3:].strip().split() or ["moonbit"])[0]
             body = [line for line in lines[1:]]
             if body and body[-1].strip() == "```":
                 body = body[:-1]

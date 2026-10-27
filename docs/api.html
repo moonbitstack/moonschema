@@ -112,18 +112,18 @@
 <h3><span class="kind">struct</span>Schema</h3>
 <p>A schema document, read and ready to validate instances against.</p><p>The version is the one the document names in <code>$schema</code>, whatever <code>draft</code> said; a document is more specific than a setting. <code>remotes</code> are the documents a <code>$ref</code> may reach outside this one, by the URI each is registered under: this library opens no sockets, so what is not fed to it does not exist.</p>
 <div class="sig"><span class="k">pub</span> <span class="k">struct</span> Schema</div>
-<div class="member" id="schema-faults"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::faults(Self, Json) -&gt; Array[Fault]</div><p>Every reason <code>instance</code> failed, or an empty array when it validated.</p><p>This is the basic output (§12.4.2), flattened: each fault says where in the instance it was, which keyword refused it, and where that keyword was.</p><pre data-lang="moonbit nocheck">let schema = @moonschema.Schema::new(
+<div class="member" id="schema-faults"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::faults(Self, Json) -&gt; Array[Fault]</div><p>Every reason <code>instance</code> failed, or an empty array when it validated.</p><p>This is the basic output (§12.4.2), flattened: each fault says where in the instance it was, which keyword refused it, and where that keyword was.</p><pre data-lang="moonbit">let schema = @moonschema.Schema::new(
   @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
 )
 for fault in schema.faults(@json.parse("0")) {
   println(fault.to_string())
 }
 // the instance: below the minimum (minimum at /minimum)</pre></div>
-<div class="member" id="schema-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -&gt; Self raise Refused</div><p>Read a schema document.</p><p><code>draft</code> is the version to read it at when it does not name one; a <code>$schema</code> it does name wins. <code>remotes</code> are the documents a <code>$ref</code> may reach, each under the URI it is referred to by.</p><pre data-lang="moonbit nocheck">let schema = @moonschema.Schema::new(
+<div class="member" id="schema-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -&gt; Self raise Refused</div><p>Read a schema document.</p><p><code>draft</code> is the version to read it at when it does not name one; a <code>$schema</code> it does name wins. <code>remotes</code> are the documents a <code>$ref</code> may reach, each under the URI it is referred to by.</p><pre data-lang="moonbit">let schema = @moonschema.Schema::new(
   @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
 )
 schema.valid(@json.parse("{\"id\": 1}"))   // true</pre></div>
-<div class="member" id="schema-valid"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::valid(Self, Json) -&gt; Bool</div><p>Whether <code>instance</code> validates.</p><p>This is the flag output (§12.4.1): the cheapest answer, and the one a guard on a request wants. <code>Schema::faults</code> says why not.</p><pre data-lang="moonbit nocheck">let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+<div class="member" id="schema-valid"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::valid(Self, Json) -&gt; Bool</div><p>Whether <code>instance</code> validates.</p><p>This is the flag output (§12.4.1): the cheapest answer, and the one a guard on a request wants. <code>Schema::faults</code> says why not.</p><pre data-lang="moonbit">let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
 schema.valid(@json.parse("7"))          // true
 schema.valid(@json.parse("\"seven\""))   // false</pre></div>
 </div>
