@@ -121,8 +121,7 @@ test "a boolean is a schema" {
 
 ///|
 test "the shorthand classes a pattern is written with" {
-  // ECMA-262 spells them `\d`, `\w` and `\s`; the engine underneath wants the
-  // POSIX names, so a pattern is rewritten before it is read.
+  // ECMA-262 spells them `\d`, `\w` and `\s`, and with `u` they stay ASCII.
   let digits = schema("{ \"pattern\": \"^\\\\d+$\" }")
   assert_eq(digits.valid(Json::string("123")), true)
   assert_eq(digits.valid(Json::string("12a")), false)
@@ -132,9 +131,14 @@ test "the shorthand classes a pattern is written with" {
   let spaced = schema("{ \"pattern\": \"a\\\\sb\" }")
   assert_eq(spaced.valid(Json::string("a b")), true)
   assert_eq(spaced.valid(Json::string("ab")), false)
-  // Negated, and inside a class beside other members.
+  // Negated, and inside a class beside a dash that closes it.
   let mixed = schema("{ \"pattern\": \"^[\\\\d-]+$\" }")
   assert_eq(mixed.valid(Json::string("1-2")), true)
+  assert_eq(mixed.valid(Json::string("1a")), false)
+  assert_eq(
+    schema("{ \"pattern\": \"^\\\\d+$\" }").valid(Json::string("\u{0663}")),
+    false,
+  )
   let other = schema("{ \"pattern\": \"^\\\\D+$\" }")
   assert_eq(other.valid(Json::string("abc")), true)
   assert_eq(other.valid(Json::string("a1c")), false)
@@ -142,8 +146,6 @@ test "the shorthand classes a pattern is written with" {
 
 ///|
 test "a property escape is the category it names" {
-  // The engine underneath has no Unicode properties, and its `[[:alpha:]]` is
-  // ASCII, so the ranges of the category are carried here and spliced in.
   let letters = schema("{ \"pattern\": \"^\\\\p{Letter}+$\" }")
   assert_eq(letters.valid(Json::string("Hello")), true)
   assert_eq(letters.valid(Json::string("\u{03C0}")), true)
@@ -164,11 +166,23 @@ test "a property escape is the category it names" {
 }
 
 ///|
-test "a property this does not know refuses rather than admits" {
-  // A script is a property too, but not one of the categories carried here. The
-  // pattern is left as it was written and the engine refuses it, which keeps a
-  // schema's mistake from passing every instance.
-  let script = schema("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }")
-  assert_eq(script.valid(Json::string("\u{6C49}")), false)
-  assert_eq(script.valid(Json::string("abc")), false)
+test "scripts and binary properties are properties too" {
+  let han = schema("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }")
+  assert_eq(han.valid(Json::string("\u{6C49}\u{5B57}")), true)
+  assert_eq(han.valid(Json::string("abc")), false)
+  let emoji = schema("{ \"pattern\": \"^\\\\p{Emoji_Presentation}$\" }")
+  assert_eq(emoji.valid(Json::string("\u{1F600}")), true)
+  assert_eq(emoji.valid(Json::string("a")), false)
+}
+
+///|
+test "a pattern the engine cannot read refuses rather than admits" {
+  // A schema's own mistake should not pass every instance.
+  let typo = schema("{ \"pattern\": \"^\\\\p{Scrpt=Han}+$\" }")
+  assert_eq(typo.valid(Json::string("\u{4E2D}")), false)
+  let broken = schema("{ \"pattern\": \"[a-\" }")
+  assert_eq(broken.valid(Json::string("a")), false)
+  // With `u`, Annex B's lenient spellings are refused.
+  let lenient = schema("{ \"pattern\": \"[\\\\d-a]\" }")
+  assert_eq(lenient.valid(Json::string("1")), false)
 }

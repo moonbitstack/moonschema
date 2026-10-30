@@ -1,6 +1,6 @@
 name = "moonbitstack/moonschema"
 
-version = "0.2.0"
+version = "0.2.1"
 
 readme = "README.md"
 
@@ -20,3 +20,7 @@ keywords = [
 description = "JSON Schema validation for MoonBit, draft-04 to 2020-12."
 
 source = "src"
+
+import {
+  "moonbitstack/moonregex@0.1.1",
+}

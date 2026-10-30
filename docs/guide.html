@@ -331,8 +331,9 @@ true</pre>
       <p>
         <code>pattern</code> is ECMA-262 syntax, and it searches: a match anywhere is a match. The
         shorthands <code>\d</code>, <code>\w</code> and <code>\s</code> work, and so do property
-        escapes such as <code>\p{Letter}</code> and <code>\p{Nd}</code>, spliced in from the
-        Unicode 15.1 tables the package carries.
+        escapes such as <code>\p{Letter}</code>, <code>\p{Nd}</code> and
+        <code>\p{Script=Han}</code>, from Unicode 17.0. The pattern is read by moonregex in its ECMA-262
+        dialect with the <code>u</code> flag, as §6.3.3 asks.
       </p>
 
       <pre data-lang="moonbit">let letters = @moonschema.Schema::new(
@@ -344,17 +345,19 @@ println(letters.valid(Json::string("Ün1code")))</pre>
 false</pre>
 
       <p>
-        A property this does not know — a script, a binary property — is left as it was written, and
-        the engine underneath refuses the pattern. A schema's own mistake then refuses instances
-        rather than admitting every one of them:
+        A pattern the engine cannot read, such as a misspelt property name, matches nothing. A
+        schema's own mistake then refuses instances rather than admitting every one of them:
       </p>
 
       <pre data-lang="moonbit">let han = @moonschema.Schema::new(
   @json.parse("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }"),
 )
 println(han.valid(Json::string("<span class='w2'>中</span>")))
-println(han.valid(Json::string("abc")))</pre>
-      <pre class="out" data-lang="text">false
+let typo = @moonschema.Schema::new(
+  @json.parse("{ \"pattern\": \"^\\\\p{Scrpt=Han}+$\" }"),
+)
+println(typo.valid(Json::string("<span class='w2'>中</span>")))</pre>
+      <pre class="out" data-lang="text">true
 false</pre>
     </section>
 

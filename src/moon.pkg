@@ -4,7 +4,7 @@
 // This package validates. It does not parse JSON: a caller hands in a `Json`
 // tree, which the core library reads.
 import {
-  "moonbitlang/core/string",
+  "moonbitstack/moonregex",
 }
 
 import {

@@ -190,7 +190,7 @@ function load(name) {
       name === "old"
         ? "draft-04 reads the flag literally: ten is out of bounds. The same document at 2020-12 lets ten through."
         : name === "text"
-          ? "\\p{Letter} is a property escape, spliced in from the Unicode tables the package carries — and maxLength counts code points, not bytes."
+          ? "\\p{Letter} is a property escape, read with the u flag as ECMA-262 says — and maxLength counts code points, not bytes."
           : name === "order"
             ? "Two applicators evaluated id and total; nothing evaluated note, so unevaluatedProperties refuses it."
             : "";

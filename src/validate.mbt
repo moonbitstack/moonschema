@@ -105,7 +105,7 @@ pub struct Schema {
   /// Each pattern as it was read, so a class of a few thousand ranges is built
   /// once rather than once per member of every instance. `None` is a pattern
   /// the engine could not read.
-  priv patterns : Map[String, @string.Regex?]
+  priv patterns : Map[String, @moonregex.Pattern?]
   /// The resources evaluation has entered, outermost first. A `$dynamicRef`
   /// resolves against this and not against where it was written, which is the
   /// whole of what makes it dynamic.

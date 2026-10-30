@@ -10,8 +10,6 @@ pub let draft : Draft
 
 pub let output : Output
 
-pub let unicode : String
-
 // Errors
 pub(all) suberror Refused {
   Unknown(String)

@@ -657,132 +657,28 @@ fn code_points(text : String) -> Int32 {
 /// match. A pattern the engine cannot read matches nothing: a schema's own
 /// mistake should refuse instances rather than admit every one of them.
 ///
-/// A pattern is read once and kept, because the same one is applied to every
-/// member of every instance and a property escape expands into a class of a
-/// few thousand ranges.
+/// §6.3.3 reads a pattern as ECMA-262 with the `u` flag, which is what gives
+/// it property escapes and code-point classes. It is read once and kept,
+/// because the same one is applied to every member of every instance.
 fn Schema::matches(self : Schema, expression : String, text : String) -> Bool {
-  match self.patterns.get(expression) {
-    Some(Some(regex)) => regex.execute(text[:]) is Some(_)
-    Some(None) => false
+  let read = match self.patterns.get(expression) {
+    Some(read) => read
     None => {
-      let read : @string.Regex? = Some(
-        @string.Regex::Regex(ecma(expression)[:]),
+      let read : @moonregex.Pattern? = Some(
+        @moonregex.compile(
+          expression,
+          flags=@moonregex.unicode,
+          dialect=@moonregex.ecma262,
+        ),
       ) catch {
         _ => None
       }
       self.patterns[expression] = read
-      match read {
-        Some(regex) => regex.execute(text[:]) is Some(_)
-        None => false
-      }
+      read
     }
   }
-}
-
-///|
-/// An ECMA-262 pattern in the spelling this engine reads.
-///
-/// Three things are rewritten. `\d`, `\w` and `\s` are ECMA-262's shorthand
-/// classes and the engine wants the POSIX names for the same sets. A property
-/// escape, `\p{Letter}` and its like, becomes the ranges that category holds —
-/// the engine has no Unicode properties of its own, and its `[[:alpha:]]` is
-/// ASCII, so the ranges are carried here instead. Everything else, backslash
-/// escapes included, is the engine's already and passes through.
-///
-/// A property nobody here knows — a script, a binary property — is left as it
-/// was written, which the engine refuses: a name this cannot honour should not
-/// quietly match something else.
-fn ecma(pattern : String) -> String {
-  let text = pattern[:]
-  let out = StringBuilder()
-  let mut inside = false
-  let mut i = 0
-  while i < text.length() {
-    let c = text[i]
-    if c == '\\' && i + 1 < text.length() {
-      let next = text[i + 1]
-      let name = match next {
-        'd' | 'D' => "digit"
-        'w' | 'W' => "word"
-        's' | 'S' => "space"
-        _ => ""
-      }
-      let negated = next == 'D' || next == 'W' || next == 'S' || next == 'P'
-      if next == 'p' || next == 'P' {
-        match property(text, i + 2) {
-          Some((body, after)) => {
-            if inside {
-              // A negated property inside a class has no spelling here, so it
-              // is left alone and the engine says so.
-              if negated {
-                out.write_string(text[i:after].to_owned())
-              } else {
-                out.write_string(body)
-              }
-            } else if negated {
-              out.write_string("[^" + body + "]")
-            } else {
-              out.write_string("[" + body + "]")
-            }
-            i = after
-            continue
-          }
-          None => {
-            out.write_string(text[i:i + 2].to_owned())
-            i = i + 2
-            continue
-          }
-        }
-      }
-      if name == "" {
-        // Every other escape is this engine's as well, backslash included.
-        out.write_string(text[i:i + 2].to_owned())
-      } else if inside {
-        if negated {
-          out.write_string(text[i:i + 2].to_owned())
-        } else {
-          out.write_string("[:" + name + ":]")
-        }
-      } else if negated {
-        out.write_string("[^[:" + name + ":]]")
-      } else {
-        out.write_string("[[:" + name + ":]]")
-      }
-      i = i + 2
-      continue
-    }
-    if c == '[' {
-      inside = true
-    } else if c == ']' {
-      inside = false
-    }
-    out.write_string(text[i:i + 1].to_owned())
-    i = i + 1
+  match read {
+    Some(regex) => (regex.search(text) catch { _ => None }) is Some(_)
+    None => false
   }
-  out.to_string()
-}
-
-///|
-/// The ranges the property escape starting at `from` names, and where it ends,
-/// or `None` when the escape is not one this knows.
-fn property(text : StringView, from : Int32) -> (String, Int32)? {
-  if from >= text.length() || text[from] != '{' {
-    return None
-  }
-  for i = from + 1; i < text.length(); i = i + 1 {
-    if text[i] == '}' {
-      let name = text[from + 1:i].to_owned()
-      // `General_Category=Lu` names the same thing as `Lu`.
-      let bare = if name.has_prefix("General_Category=") {
-        name[17:].to_owned()
-      } else {
-        name
-      }
-      return match categories.get(bare) {
-        Some(body) => Some((body, i + 1))
-        None => None
-      }
-    }
-  }
-  None
 }
