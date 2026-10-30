@@ -1118,7 +1118,12 @@ footer.site{
   overflow-x:auto;
   white-space:pre;
   color:var(--ink);
-  scrollbar-width:thin;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .sig {
+    scrollbar-width:thin;
+  }
 }
 .sig .k{color:var(--violet);}
 .entry p{font-size:14.5px;color:var(--ink-2);max-width:74ch}
