@@ -1,7 +1,7 @@
 // Copyright 2026 Leo Cheng
 // SPDX-License-Identifier: Apache-2.0
 
-// One document, five readings: the places where the versions actually differ.
+// One document, six readings: the places where the versions actually differ.
 // Run it with `moon run examples/versions`.
 
 ///|
@@ -12,7 +12,15 @@ fn main raise {
   // number, asserts nothing, and ten is allowed.
   let flag = @json.parse("{ \"maximum\": 10, \"exclusiveMaximum\": true }")
   println("maximum 10, exclusiveMaximum true — is ten allowed?")
-  for draft in [@moonschema.Draft::Draft4, Draft6, Draft7, Draft2019, Draft2020] {
+  for
+    draft in [
+      @moonschema.Draft::Draft4,
+      Draft6,
+      Draft7,
+      Draft2019,
+      Draft2020,
+      V1,
+    ] {
     let schema = @moonschema.Schema::new(flag, draft~)
     println("  \{draft}  \{schema.valid(Json::number(10.0))}")
   }
@@ -44,6 +52,21 @@ fn main raise {
   for draft in [@moonschema.Draft::Draft7, Draft2019, Draft2020] {
     let schema = @moonschema.Schema::new(needs, draft~)
     println("  \{draft}  \{schema.valid(@json.parse("{\"a\": 1}"))}")
+  }
+
+  // `propertyDependencies` arrived in v1: one property's value chooses the
+  // subschema the whole instance is then validated against. Before v1 the
+  // keyword is unknown, and an unknown keyword asserts nothing.
+  let chosen = @json.parse(
+    (
+      #|{ "propertyDependencies": {
+      #|    "kind": { "card": { "required": ["number"] } } } }
+    ),
+  )
+  println("\npropertyDependencies — a card needs a number:")
+  for draft in [@moonschema.Draft::Draft2020, V1] {
+    let schema = @moonschema.Schema::new(chosen, draft~)
+    println("  \{draft}  \{schema.valid(@json.parse("{\"kind\": \"card\"}"))}")
   }
 
   // A document that names a version is read at the version it names, whatever

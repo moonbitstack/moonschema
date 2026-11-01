@@ -1,0 +1,7 @@
+// A vocabulary from outside: one keyword, one metaschema, one registry.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonschema",
+  "moonbitlang/core/json",
+}

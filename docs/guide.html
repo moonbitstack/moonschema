@@ -44,13 +44,16 @@
     <ol>
       <li><a href="#verdict">A verdict</a></li>
       <li><a href="#faults">When it says no</a></li>
+      <li><a href="#outputs">Four ways to say it</a></li>
       <li><a href="#versions">Which version</a></li>
       <li><a href="#objects">Objects</a></li>
       <li><a href="#arrays">Arrays</a></li>
       <li><a href="#text">Text</a></li>
+      <li><a href="#formats">format</a></li>
       <li><a href="#numbers">Numbers</a></li>
       <li><a href="#composition">Composition</a></li>
       <li><a href="#references">References</a></li>
+      <li><a href="#vocabularies">Your own keywords</a></li>
       <li><a href="#refusals">Refusals</a></li>
       <li><a href="#limits">Where it stops</a></li>
     </ol>
@@ -100,7 +103,7 @@ false</pre>
     </section>
 
     <section id="faults">
-      <p class="eyebrow">02 · The basic output</p>
+      <p class="eyebrow">02 · Reasons</p>
       <h2>When it says no</h2>
       <p>
         A fault is a plain struct with four fields. Everything a message needs is in them: where the
@@ -160,11 +163,115 @@ false</pre>
       </div>
     </section>
 
+    <section id="outputs">
+      <p class="eyebrow">03 · Four ways to say it</p>
+      <h2>Four ways to say it</h2>
+      <p class="lead">
+        §12 of the specification names four output formats, and <code>report</code> is all four:
+        the same walk, said with more or less of itself. <code>Report::to_json</code> writes the
+        object §12.4 describes, which is the one to send over a wire.
+      </p>
+
+      <table class="sheet">
+        <thead>
+          <tr><th>Format</th><th>Says</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Flag</code></td><td>whether it validated, and nothing else</td></tr>
+          <tr><td><code>Basic</code></td><td>a flat list, one entry per keyword, each with both locations</td></tr>
+          <tr><td><code>Detailed</code></td><td>a tree, with the places several reasons share kept and a single reason pulled up to its parent</td></tr>
+          <tr><td><code>Verbose</code></td><td>the whole tree, annotations and passes included</td></tr>
+        </tbody>
+      </table>
+
+      <pre data-lang="moonbit">fn main raise {
+  let schema = @moonschema.Schema::new(
+    @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+  )
+  let report = schema.report(@json.parse("0"), output=@moonschema.Output::Basic)
+  println(report.to_json().stringify(indent=2))
+}</pre>
+      <pre class="out" data-lang="json">{
+  "valid": false,
+  "errors": [
+    {
+      "valid": false,
+      "keywordLocation": "/minimum",
+      "instanceLocation": "",
+      "error": "below the minimum"
+    }
+  ]
+}</pre>
+
+      <p>
+        <code>detailed</code> says the same thing here, because there is one reason in one place.
+        <code>verbose</code> adds what passed, which is the difference worth seeing:
+      </p>
+
+      <pre class="out" data-lang="json">{
+  "valid": false,
+  "errors": [
+    {
+      "valid": false,
+      "keywordLocation": "/minimum",
+      "instanceLocation": "",
+      "error": "below the minimum"
+    },
+    {
+      "valid": true,
+      "keywordLocation": "/type",
+      "instanceLocation": ""
+    }
+  ]
+}</pre>
+
+      <p>
+        There is no <code>absoluteKeywordLocation</code> in either, and that is not an omission:
+        §12.3.2 lets it go when the schema names no <code>$id</code>, and this one does not.
+      </p>
+      <p>
+        An output unit carries two pointers that are one pointer until a reference is crossed.
+        <code>keywordLocation</code> is the evaluation path and includes the <code>$ref</code> it
+        went through; <code>absoluteKeywordLocation</code> is the schema location — the resource's
+        own URI and a pointer into it — and never does. A reader that has to fetch the keyword
+        needs the second:
+      </p>
+
+      <pre data-lang="moonbit">let schema = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "$id": "https://example.test/point",
+      #|  "$defs": { "num": { "type": "integer" } },
+      #|  "$ref": "#/$defs/num" }
+    ),
+  ),
+)
+let report = schema.report(@json.parse("\"seven\""), output=@moonschema.Output::Basic)
+for unit in report.units {
+  let place = match unit.absolute_at {
+    Some(found) => found
+    None => "no location to point at"
+  }
+  println("\{unit.keyword_at}  ->  \{place}")
+}</pre>
+      <pre class="out" data-lang="text">/$ref/type  ->  https://example.test/point#/$defs/num/type</pre>
+
+      <div class="note">
+        <span class="mk">reading</span>
+        <div>
+          The units come out in pointer order, not in the order the map of keywords happens to
+          hold them: two runs of one validation should read the same. <code>faults</code> is the
+          same walk read one more way — the leaves that hold a reason, in the order they were
+          found.
+        </div>
+      </div>
+    </section>
+
     <section id="versions">
-      <p class="eyebrow">03 · Five of them</p>
+      <p class="eyebrow">04 · Six of them</p>
       <h2>Which version a document is</h2>
       <p>
-        <code>Draft</code> has five values. <code>Draft::uri</code> prints the <code>$schema</code>
+        <code>Draft</code> has six values. <code>Draft::uri</code> prints the <code>$schema</code>
         a document would write; <code>Draft::of</code> reads one back.
       </p>
 
@@ -208,10 +315,36 @@ println(schema.valid(Json::number(10.0)))</pre>
         <code>http</code> and <code>https</code> spellings are accepted, with or without the
         trailing <code>#</code>.
       </p>
+      <p>
+        v1 is the release after 2020-12, and it answers to two IRIs: <code>https://json-schema.org/v1</code>,
+        which names the latest release within the version, and <code>https://json-schema.org/v1/2026</code>,
+        which names that release. Three things change. <code>format</code> asserts without being
+        asked (see <a href="#formats">format</a>); <code>propertyDependencies</code> joins the
+        applicators; and <code>$dynamicRef</code> stops asking that it first resolve to a
+        <code>$dynamicAnchor</code> of the same name before the dynamic scope takes over:
+      </p>
+
+      <pre data-lang="moonbit">let chosen = @json.parse(
+  (
+    #|{ "propertyDependencies": {
+    #|    "kind": { "card": { "required": ["number"] } } } }
+  ),
+)
+for draft in [@moonschema.Draft::Draft2020, V1] {
+  let schema = @moonschema.Schema::new(chosen, draft~)
+  println("\{draft}  \{schema.valid(@json.parse("{\"kind\": \"card\"}"))}")
+}</pre>
+      <pre class="out" data-lang="text">2020-12  true
+v1  false</pre>
+
+      <p>
+        At 2020-12 the keyword is one of nobody's, and §6.5 says an unknown keyword asserts
+        nothing. At v1 it says that a <code>card</code> needs a number, and the instance has none.
+      </p>
     </section>
 
     <section id="objects">
-      <p class="eyebrow">04 · Members</p>
+      <p class="eyebrow">05 · Members</p>
       <h2>Objects</h2>
       <p>
         Four keywords read the same object and have to agree on which held each of them:
@@ -264,7 +397,7 @@ for fault in keys.faults(@json.parse("{\"User Name\": 1}")) {
     </section>
 
     <section id="arrays">
-      <p class="eyebrow">05 · Items</p>
+      <p class="eyebrow">06 · Items</p>
       <h2>Arrays</h2>
       <p>
         In 2020-12 a list of schemas for the leading items is <code>prefixItems</code> and
@@ -306,7 +439,7 @@ true</pre>
     </section>
 
     <section id="text">
-      <p class="eyebrow">06 · Strings</p>
+      <p class="eyebrow">07 · Strings</p>
       <h2>Text</h2>
       <p>
         A length is counted in code points, not bytes and not UTF-16 units: an emoji is one
@@ -361,8 +494,69 @@ println(typo.valid(Json::string("<span class='w2'>中</span>")))</pre>
 false</pre>
     </section>
 
+    <section id="formats">
+      <p class="eyebrow">08 · Shapes of strings</p>
+      <h2>format</h2>
+      <p class="lead">
+        <code>format</code> names a shape for a string, and there are nineteen names, each read
+        against the RFC that defines it. Whether the keyword <em>asserts</em> is the question, and
+        before v1 the answer is no unless you ask.
+      </p>
+
+      <pre data-lang="moonbit">let lenient = @moonschema.Schema::new(@json.parse("{ \"format\": \"date-time\" }"))
+println(lenient.valid(@json.parse("\"1990-02-31T15:59:59Z\"")))
+let strict = @moonschema.Schema::new(
+  @json.parse("{ \"format\": \"date-time\" }"),
+  format=true,
+)
+println(strict.valid(@json.parse("\"1990-02-31T15:59:59Z\"")))
+println(strict.valid(@json.parse("\"1998-12-31T23:59:60Z\"")))</pre>
+      <pre class="out" data-lang="text">true
+false
+true</pre>
+
+      <p>
+        February has no thirty-first day, and the second line is the one that notices. The third
+        is a leap second: <code>23:59:60Z</code> is a time RFC 3339 allows, and
+        <code>22:59:60Z</code> is not — the <code>:60</code> belongs to one minute of one day, in
+        UTC, whatever offset the text carries.
+      </p>
+      <p>
+        Three things decide whether the keyword asserts, and the most specific wins: the
+        <code>format</code> argument to <code>Schema::new</code>, then the dialect the document
+        names — a metaschema that declares the format-assertion vocabulary — then the version,
+        where v1 asserts and everything before it annotates.
+      </p>
+
+      <table class="sheet">
+        <thead>
+          <tr><th>Group</th><th>Names, and the RFC behind each</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Time</td><td><code>date</code>, <code>time</code>, <code>date-time</code>, <code>duration</code> — RFC 3339</td></tr>
+          <tr><td>Hosts</td><td><code>hostname</code>, <code>idn-hostname</code> — RFC 1123 and RFC 5890; <code>ipv4</code>, <code>ipv6</code> — RFC 2673 and RFC 4291</td></tr>
+          <tr><td>Mail</td><td><code>email</code>, <code>idn-email</code> — RFC 5321 and RFC 6531</td></tr>
+          <tr><td>Resources</td><td><code>uri</code>, <code>uri-reference</code> — RFC 3986; <code>iri</code>, <code>iri-reference</code> — RFC 3987; <code>uri-template</code> — RFC 6570</td></tr>
+          <tr><td>Values</td><td><code>uuid</code> — RFC 4122; <code>json-pointer</code> — RFC 6901; <code>relative-json-pointer</code>; <code>regex</code> — ECMA-262</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        A name this does not know asserts nothing, because a format is the schema author's word for
+        something and an unknown word is not a refusal. v1 makes the exception: there an unknown
+        format is a schema that cannot be read, since the release made assertion the requirement
+        and an assertion nobody can make is not one to skip.
+      </p>
+      <p>
+        The hosts go through the derived property of RFC 5892, generated from the published tables
+        by <code>scripts/gen_idna_classes.py</code>; the mapping, the normalisation and the Punycode
+        are moonurl's. The calendar is moondate's. The rest is read here, because a format is a
+        grammar and no library in this family answers it.
+      </p>
+    </section>
+
     <section id="numbers">
-      <p class="eyebrow">07 · Numbers</p>
+      <p class="eyebrow">09 · Numbers</p>
       <h2>Numbers</h2>
       <p>
         <code>integer</code> means a number with nothing after the decimal point, which is what JSON
@@ -399,7 +593,7 @@ false</pre>
     </section>
 
     <section id="composition">
-      <p class="eyebrow">08 · Schemas of schemas</p>
+      <p class="eyebrow">10 · Schemas of schemas</p>
       <h2>Composition, and what is left over</h2>
       <p>
         <code>allOf</code> applies every branch and reports every branch that refused.
@@ -473,7 +667,7 @@ for fault in closed.faults(
     </section>
 
     <section id="references">
-      <p class="eyebrow">09 · Addressing</p>
+      <p class="eyebrow">11 · Addressing</p>
       <h2>References</h2>
       <p>
         <code>$defs</code> holds schemas to refer to and <code>$ref</code> reaches one by JSON
@@ -551,8 +745,117 @@ true</pre>
       </p>
     </section>
 
+    <section id="vocabularies">
+      <p class="eyebrow">12 · Your own keywords</p>
+      <h2>Your own keywords</h2>
+      <p class="lead">
+        JSON Schema is a language of vocabularies, and a vocabulary is a set of keywords with a URI.
+        One from outside this library plugs in without a change here: a <code>Keyword</code> for the
+        keyword, a <code>Vocabulary</code> to hold it, and a <code>Registry</code> to offer it.
+      </p>
+
+      <pre data-lang="moonbit">/// `x-units`: a number is a whole number of units, and the keyword says how many
+/// decimal places a unit has — so `2` admits `1.25` and refuses `1.234`.
+struct Units {}
+
+pub impl @moonschema.Keyword for Units with fn name(_self) { "x-units" }
+
+pub impl @moonschema.Keyword for Units with fn judge(_self, value, instance, site) {
+  ignore(site)
+  match (value, instance) {
+    (Number(places, ..), Number(number, ..)) => {
+      let scaled = number * scale_of(places)
+      let nearest = scaled.round()
+      let slack = if scaled.abs() > 1.0 { scaled.abs() } else { 1.0 }
+      if (scaled - nearest).abs() <= 1.0e-9 * slack {
+        Accept
+      } else {
+        Refuse(why="not a whole number of units")
+      }
+    }
+    _ => Accept
+  }
+}
+
+pub extend Units with @moonschema.Keyword::{name, judge}
+
+struct Measures {}
+
+pub impl @moonschema.Vocabulary for Measures with fn uri(_self) {
+  "https://example.test/vocab/measures"
+}
+
+pub impl @moonschema.Vocabulary for Measures with fn keywords(_self) {
+  let units : &@moonschema.Keyword = Units::{  }
+  [units]
+}
+
+pub extend Measures with @moonschema.Vocabulary::{uri, keywords}</pre>
+
+      <p>
+        A keyword sees the instance, the keyword's own value, and where both sit. It answers
+        <code>Accept</code>, <code>Annotate</code> with what it contributes to the output, or
+        <code>Refuse</code> with a reason. It does not apply subschemas: a keyword that has to walk
+        one is an applicator, and those are this library's.
+      </p>
+      <p>
+        What puts the vocabulary in force is the document's own metaschema, read from
+        <code>remotes</code> like any other document:
+      </p>
+
+      <pre data-lang="moonbit">let metaschema = @json.parse(
+  (
+    #|{ "$id": "https://example.test/meta",
+    #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
+    #|  "$vocabulary": {
+    #|    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    #|    "https://example.test/vocab/measures": true } }
+  ),
+)
+let remotes = { "https://example.test/meta": metaschema }
+let registry = @moonschema.Registry::new()
+registry.add(Measures::{  })
+let schema = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "$schema": "https://example.test/meta",
+      #|  "type": "number", "x-units": 2 }
+    ),
+  ),
+  remotes~,
+  registry~,
+)
+for text in ["1.25", "1.234"] {
+  println("\{text}  \{schema.valid(@json.parse(text))}")
+}</pre>
+      <pre class="out" data-lang="text">1.25  true
+1.234  false</pre>
+
+      <p>Four rules, and each of them is a refusal rather than a quiet choice:</p>
+      <ul>
+        <li>
+          A vocabulary the metaschema names with <code>true</code> asserts; named with
+          <code>false</code>, its keywords annotate and assert nothing, which is what the
+          specification means by an optional vocabulary.
+        </li>
+        <li>
+          A vocabulary named with <code>true</code> that nobody holds is a document this cannot
+          read: <code>Schema::new</code> raises <code>Broken</code> rather than half-read it.
+        </li>
+        <li>
+          A keyword may not take a name a built-in keyword answers to. The registration is refused,
+          because a keyword that means one thing here and another to the document is worse than one
+          that does not load.
+        </li>
+        <li>
+          Two vocabularies may not claim one name either: the second registration is refused rather
+          than resolved in someone's favour.
+        </li>
+      </ul>
+    </section>
+
     <section id="refusals">
-      <p class="eyebrow">10 · Not reading</p>
+      <p class="eyebrow">13 · Not reading</p>
       <h2>Refusals</h2>
       <p>
         <code>Schema::new</code> raises <code>Refused</code> when it cannot make sense of a
@@ -588,13 +891,19 @@ false</pre>
     </section>
 
     <section id="limits">
-      <p class="eyebrow">11 · Scope</p>
+      <p class="eyebrow">14 · Scope</p>
       <h2>Where it stops</h2>
       <p>
-        <code>format</code> is an annotation in the specification unless a caller asks otherwise, and
-        this does not offer the otherwise yet — so <code>format</code> asserts nothing and a schema
-        that relies on it is a schema with a hole. Validate the value with
-        <code>pattern</code>, or check it yourself after the fact.
+        A schema is read for what it says, and not checked against its own metaschema: a schema that
+        is wrong in a way only the metaschema would notice is read as it is written. Reading it for
+        what it says and then refusing to read it at all are different jobs, and only the first is
+        here.
+      </p>
+      <p>
+        <code>verbose</code> keeps every result this walk kept, which is every keyword it applied —
+        but a branch of <code>anyOf</code> that failed while a sibling carried the instance is not
+        kept, because it is not a result. The specification's dropped annotations would show it, and
+        those are not here.
       </p>
       <p>
         Three more things are deliberately outside: hyper-schema, which is a different

@@ -9,7 +9,8 @@ fn main {
     uri in [
       "http://json-schema.org/draft-04/schema#", "http://json-schema.org/draft-06/schema#",
       "http://json-schema.org/draft-07/schema#", "https://json-schema.org/draft/2019-09/schema",
-      "https://json-schema.org/draft/2020-12/schema", "https://example.test/schema",
+      "https://json-schema.org/draft/2020-12/schema", "https://json-schema.org/v1",
+      "https://json-schema.org/v1/2026", "https://example.test/schema",
     ] {
     let named = match @moonschema.Draft::of(uri[:]) {
       Some(d) => d.to_string()
@@ -19,7 +20,7 @@ fn main {
   }
 
   // Every version names itself, and reads back as itself.
-  for d in [@moonschema.Draft::Draft4, Draft6, Draft7, Draft2019, Draft2020] {
+  for d in [@moonschema.Draft::Draft4, Draft6, Draft7, Draft2019, Draft2020, V1] {
     let back = @moonschema.Draft::of(d.uri()[:])
     println("\{d} -> \{d.uri()} -> \{back is Some(_)}")
   }

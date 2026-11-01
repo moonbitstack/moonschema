@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbitstack/moonschema/examples/vocabularies"
+
+import {
+  "moonbitstack/moonschema",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Measures
+pub fn Measures::keywords(Self) -> Array[&@moonschema.Keyword]
+pub fn Measures::uri(Self) -> String
+pub impl @moonschema.Vocabulary for Measures
+
+type Units
+pub fn Units::judge(Self, Json, Json, @moonschema.Site) -> @moonschema.Verdict
+pub fn Units::name(Self) -> String
+pub impl @moonschema.Keyword for Units
+
+// Type aliases
+
+// Traits

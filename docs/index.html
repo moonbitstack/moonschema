@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>moonschema — JSON Schema validation for MoonBit</title>
-<meta name="description" content="Validate a JSON document against a JSON Schema in MoonBit: five versions, faults that name the place in the instance and the place in the schema, references that reach only the documents you hand over.">
+<meta name="description" content="Validate a JSON document against a JSON Schema in MoonBit: six versions, four output formats, format assertion, and faults that name the place in the instance and the place in the schema.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
@@ -42,13 +42,13 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <p class="eyebrow">Five versions, one walk</p>
+        <p class="eyebrow">Six versions, one walk</p>
         <h1>Every document,<br><em>thread by thread.</em></h1>
         <p class="lede">
           <b>moonschema</b> validates a JSON instance against a JSON Schema. You hand it a
           <code>Json</code> tree; it answers yes or no, and when the answer is no it says where —
-          in the instance, and in the schema. Five versions of the specification, one validator,
-          no sockets.
+          in the instance, and in the schema. Six versions of the specification, four output
+          formats, and no sockets.
         </p>
         <div class="install">
           <span class="sigil">$</span> moon add moonbitstack/moonschema
@@ -111,6 +111,7 @@
         <label class="loom-hint" for="draft-menu">read at</label>
         <select id="draft-menu" class="chip-btn" aria-label="Version">
           <option value="https://json-schema.org/draft/2020-12/schema" selected>2020-12</option>
+          <option value="https://json-schema.org/v1">v1</option>
           <option value="https://json-schema.org/draft/2019-09/schema">2019-09</option>
           <option value="http://json-schema.org/draft-07/schema#">draft-07</option>
           <option value="http://json-schema.org/draft-06/schema#">draft-06</option>
@@ -150,14 +151,14 @@
     <div class="wrap">
       <div class="numbers" data-reveal>
         <div class="number">
-          <span class="n">5</span>
+          <span class="n">6</span>
           <span class="k">versions</span>
-          <span class="d">draft-04 through 2020-12, one walk over the keywords.</span>
+          <span class="d">draft-04 through v1, one walk over the keywords.</span>
         </div>
         <div class="number">
           <span class="n">4</span>
-          <span class="k">fields in a fault</span>
-          <span class="d">where in the instance, which keyword, what it said, where in the schema.</span>
+          <span class="k">output formats</span>
+          <span class="d">flag, basic, detailed and verbose — the same walk, read four ways.</span>
         </div>
         <div class="number">
           <span class="n">0</span>
@@ -165,9 +166,9 @@
           <span class="d">A reference reaches the documents you hand over, and nothing else.</span>
         </div>
         <div class="number">
-          <span class="n">2</span>
-          <span class="k">calls to a verdict</span>
-          <span class="d"><code>Schema::new</code> once, then <code>valid</code> or <code>faults</code>.</span>
+          <span class="n">19</span>
+          <span class="k">format names</span>
+          <span class="d">date-time, email, ipv4, uri, uuid and the rest, each against its RFC.</span>
         </div>
       </div>
     </div>
@@ -176,7 +177,7 @@
   <section id="what">
     <div class="wrap">
       <p class="eyebrow">What it holds to</p>
-      <h2 class="display">Six things it does properly</h2>
+      <h2 class="display">What it does, and what it refuses</h2>
       <p class="sec-intro">
         The specification is large and most of it is small print. These are the parts that decide
         whether a validator is useful or merely present.
@@ -232,17 +233,44 @@
             is read — not read at a version of someone else's choosing.
           </p>
         </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">format</span> Nineteen names, each an RFC</h3>
+          <p>
+            <code>date-time</code> and its leap second, <code>email</code> down to a quoted local
+            part, <code>idn-hostname</code> through the tables of RFC 5892, <code>uri</code> by
+            component. An assertion when you ask for one, and by default from v1.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">report</span> Four formats, one walk</h3>
+          <p>
+            <code>flag</code>, <code>basic</code>, <code>detailed</code>, <code>verbose</code>.
+            Each unit carries the evaluation path that went through <code>$ref</code> and the
+            schema location that did not.
+          </p>
+        </article>
+
+        <article class="card" data-reveal>
+          <h3><span class="k">Keyword</span> Your own vocabulary</h3>
+          <p>
+            A <code>pub(open) trait</code> for a keyword and one for a vocabulary: a document that
+            names yours in <code>$vocabulary</code> gets it, and the library is not changed to
+            allow it.
+          </p>
+        </article>
       </div>
     </div>
   </section>
 
   <section id="versions">
     <div class="wrap">
-      <p class="eyebrow">The five</p>
+      <p class="eyebrow">The six</p>
       <h2 class="display">Versions, and why each is here</h2>
       <p class="sec-intro">
-        Five released versions are still in use, so five are here. The value on the left is the
-        enum; the URI is what a document writes in <code>$schema</code>.
+        Six versions are in use, so six are here. The value on the left is the enum; the URI is
+        what a document writes in <code>$schema</code>.
       </p>
       <div class="table-cloth" data-reveal>
         <table class="sheet">
@@ -275,6 +303,11 @@
               <td><code>json-schema.org/draft/2020-12/schema</code></td>
               <td><code>$dynamicRef</code>, <code>prefixItems</code> — and what OpenAPI 3.1 is.</td>
             </tr>
+            <tr>
+              <td><span class="v">V1</span></td>
+              <td><code>json-schema.org/v1</code></td>
+              <td><code>format</code> asserts, <code>propertyDependencies</code> arrives.</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -296,8 +329,8 @@
           <p>A validator that opens sockets is a validator that blocks, retries and fails. The seam is <code>remotes</code>: a map from URI to document, filled by the caller.</p>
         </article>
         <article class="card" data-reveal>
-          <h3><span class="k">no</span> Assert <code>format</code></h3>
-          <p>The specification makes <code>format</code> an annotation unless a caller asks otherwise. This does not offer the otherwise yet, so nothing is asserted.</p>
+          <h3><span class="k">no</span> Validate a schema against its metaschema</h3>
+          <p>A schema is read for what it says, not checked for whether it should have said it. <code>$schema</code> picks the version; the rest is the schema author's business.</p>
         </article>
         <article class="card" data-reveal>
           <h3><span class="k">no</span> Hyper-schema</h3>
@@ -325,7 +358,7 @@
         </a>
         <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/src/examples/versions">
           <span class="num">02</span><span class="nm">versions</span>
-          <span class="why">one document read at each of the five</span>
+          <span class="why">one document read at each of the six</span>
         </a>
         <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/src/examples/references">
           <span class="num">03</span><span class="nm">references</span>
@@ -335,8 +368,16 @@
           <span class="num">04</span><span class="nm">composition</span>
           <span class="why">allOf, oneOf, if/then/else, unevaluated</span>
         </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/src/examples/formats">
+          <span class="num">05</span><span class="nm">formats</span>
+          <span class="why">one failure in all four output formats</span>
+        </a>
+        <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/src/examples/vocabularies">
+          <span class="num">06</span><span class="nm">vocabularies</span>
+          <span class="why">a keyword from outside, put in force by a metaschema</span>
+        </a>
         <a class="example" href="https://github.com/moonbitstack/moonschema/tree/master/src/examples/web">
-          <span class="num">05</span><span class="nm">web</span>
+          <span class="num">07</span><span class="nm">web</span>
           <span class="why">the engine this page runs</span>
         </a>
       </div>
