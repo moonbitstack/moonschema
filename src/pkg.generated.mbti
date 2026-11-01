@@ -78,7 +78,7 @@ pub struct Schema {
   // private fields
 }
 pub fn Schema::faults(Self, Json) -> Array[Fault]
-pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -> Self raise Refused
+pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json], format? : Bool) -> Self raise Refused
 pub fn Schema::valid(Self, Json) -> Bool
 
 pub(all) struct Site {

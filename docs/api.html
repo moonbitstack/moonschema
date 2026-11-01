@@ -134,7 +134,7 @@ for fault in schema.faults(@json.parse("0")) {
   println(fault.to_string())
 }
 // the instance: below the minimum (minimum at /minimum)</pre></div>
-<div class="member" id="schema-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -&gt; Self raise Refused</div><p>Read a schema document.</p><p><code>draft</code> is the version to read it at when it does not name one; a <code>$schema</code> it does name wins. <code>remotes</code> are the documents a <code>$ref</code> may reach, each under the URI it is referred to by.</p><pre data-lang="moonbit">let schema = @moonschema.Schema::new(
+<div class="member" id="schema-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::new(Json, draft? : Draft, remotes? : Map[String, Json], format? : Bool) -&gt; Self raise Refused</div><p>Read a schema document.</p><p><code>draft</code> is the version to read it at when it does not name one; a <code>$schema</code> it does name wins. <code>remotes</code> are the documents a <code>$ref</code> may reach, each under the URI it is referred to by.</p><p><code>format</code> decides whether <code>format</code> asserts. Left out, the document answers for itself: an annotation before v1 unless its dialect's metaschema declares the assertion vocabulary, and an assertion throughout v1. Given, it is the answer, because a call is more specific than a document's dialect, which is more specific than a version's default.</p><pre data-lang="moonbit">let schema = @moonschema.Schema::new(
   @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
 )
 schema.valid(@json.parse("{\"id\": 1}"))   // true</pre></div>

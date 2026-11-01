@@ -91,6 +91,9 @@ pub struct Schema {
   /// Whether the validation vocabulary is in force, which is what decides
   /// whether `minimum` and its like assert or merely annotate.
   priv asserts : Bool
+  /// Whether `format` asserts rather than annotates: on when the dialect's
+  /// metaschema says so, or when the caller asked for it.
+  priv asserts_format : Bool
   priv base : String
   /// Every `$id`, `$anchor` and `$dynamicAnchor` in reach, by absolute URI.
   priv ids : Map[String, Json]
@@ -119,6 +122,12 @@ pub struct Schema {
 /// it does name wins. `remotes` are the documents a `$ref` may reach, each under
 /// the URI it is referred to by.
 ///
+/// `format` decides whether `format` asserts. Left out, the document answers for
+/// itself: an annotation before v1 unless its dialect's metaschema declares the
+/// assertion vocabulary, and an assertion throughout v1. Given, it is the
+/// answer, because a call is more specific than a document's dialect, which is
+/// more specific than a version's default.
+///
 /// ```moonbit nocheck
 /// let schema = @moonschema.Schema::new(
 ///   @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
@@ -129,6 +138,7 @@ pub fn Schema::new(
   document : Json,
   draft~ : Draft = draft,
   remotes~ : Map[String, Json] = Map::Map([]),
+  format? : Bool,
 ) -> Schema raise Refused {
   let mut version = draft
   // Every keyword this validates with is in the validation vocabulary. A
@@ -136,13 +146,15 @@ pub fn Schema::new(
   // the keywords to be read as annotations, and a validator that asserted them
   // anyway would refuse instances the schema's own author allows.
   let mut asserts = true
+  let mut asserts_format = draft.asserts_format()
   match document {
     Object(members) =>
       match members.get("$schema") {
         Some(String(uri)) => {
-          let (named, validating) = read_version(uri, remotes)
+          let (named, validating, formatting) = read_version(uri, remotes)
           version = named
           asserts = validating
+          asserts_format = formatting
         }
         _ => ()
       }
@@ -160,6 +172,13 @@ pub fn Schema::new(
     root: document,
     draft: version,
     asserts,
+    // The version's own answer unless the caller overrode it: a document is
+    // more specific than a setting, and a setting is more specific than the
+    // version's default.
+    asserts_format: match format {
+      Some(wanted) => wanted
+      None => asserts_format
+    },
     base,
     ids: Map::Map([]),
     outer: Map::Map([]),
@@ -263,7 +282,7 @@ fn Schema::index(
   base : String,
   document : String,
   path : String,
-) -> Unit {
+) -> Unit raise Refused {
   guard node is Object(members) else { return }
   // Every node is addressable by a pointer into the document it is in, and the
   // base outside it is what a reference landing there resolves against.
@@ -305,6 +324,17 @@ fn Schema::index(
   match members.get("$recursiveAnchor") {
     Some(True) => self.anchor_dynamic(here, "", node)
     _ => ()
+  }
+  // v1 makes an unknown format a schema this cannot read: `format` asserts
+  // there, and an assertion nobody can make is not one to skip over silently.
+  if self.draft == V1 {
+    match members.get("format") {
+      Some(String(name)) =>
+        if !known_format(name) {
+          raise Broken(at=step(path, "format"), why="no such format: " + name)
+        }
+      _ => ()
+    }
   }
   for keyword, value in members {
     match keyword {
@@ -512,8 +542,8 @@ fn Schema::outermost(self : Schema, anchor : String) -> (Json, String)? {
 }
 
 ///|
-/// The version a `$schema` URI names, and whether its validation vocabulary is
-/// in force.
+/// What a metaschema says about the document read against it: the version, and
+/// which of the two vocabularies that change behaviour it declares.
 ///
 /// A URI this does not know is looked for among the documents the caller fed:
 /// a custom metaschema is a document like any other, and what it says about
@@ -523,29 +553,41 @@ fn Schema::outermost(self : Schema, anchor : String) -> (Json, String)? {
 fn read_version(
   uri : String,
   remotes : Map[String, Json],
-) -> (Draft, Bool) raise Refused {
+) -> (Draft, Bool, Bool) raise Refused {
   match Draft::of(uri[:]) {
-    Some(named) => (named, true)
+    Some(named) => (named, true, named.asserts_format())
     None =>
       match remotes.get(split_fragment(uri).0) {
         Some(Object(meta)) => {
-          let version = match meta.get("$schema") {
-            Some(String(parent)) => read_version(parent, remotes).0
+          let (version, asserting) = match meta.get("$schema") {
+            Some(String(parent)) => {
+              let (named, _, asserting) = read_version(parent, remotes)
+              (named, asserting)
+            }
             _ => raise Unknown(uri)
           }
           let mut asserts = true
+          // A dialect that names the assertion vocabulary asserts `format`,
+          // whether the entry beside it is `true` or `false`: the boolean is
+          // advice for readers that do not know the vocabulary, and this one
+          // does.
+          let mut format = asserting
           match meta.get("$vocabulary") {
             Some(Object(declared)) => {
               asserts = false
+              format = false
               for vocabulary, wanted in declared {
                 if vocabulary.has_suffix("/vocab/validation") && wanted is True {
                   asserts = true
+                }
+                if vocabulary.has_suffix("/vocab/format-assertion") {
+                  format = true
                 }
               }
             }
             _ => ()
           }
-          (version, asserts)
+          (version, asserts, format)
         }
         _ => raise Unknown(uri)
       }

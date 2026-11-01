@@ -159,6 +159,7 @@ fn Schema::check(
                 }
               _ => true
             }
+          "format" => self.check_format(schema, value, at, kpath, faults)
           "pattern" =>
             match (schema, value) {
               (String(expression), String(text)) =>

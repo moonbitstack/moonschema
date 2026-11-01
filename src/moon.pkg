@@ -4,8 +4,10 @@
 // This package validates. It does not parse JSON: a caller hands in a `Json`
 // tree, which the core library reads.
 import {
+  "moonbitstack/moondate",
   "moonbitstack/moonregex",
   "moonbitstack/moonurl",
+  "moonbitstack/moonurl/idna",
 }
 
 import {

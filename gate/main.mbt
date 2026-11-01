@@ -6,40 +6,100 @@
 let suite : String = "suite"
 
 ///|
-/// One directory of the suite, run at one version.
+/// One reading of the suite, at one version.
 ///
 /// The required cases of each version are six of these; the rest are the parts
 /// the specification calls optional or leaves as a proposal, run because this
 /// library claims them.
 struct Run {
-  /// Where the directory is, relative to `tests/`.
+  /// The directory under `tests/` the cases are in.
   directory : String
+  /// One file of that directory, when the run is a single file rather than the
+  /// whole directory.
+  file : String?
   /// The version the cases are read at.
   draft : @moonschema.Draft
+  /// Whether these cases call for `format` to assert. The suite asks a runner to
+  /// turn it on for `optional/format`, and the parts about annotation run with
+  /// it off; `None` is the document's own dialect deciding, which is what the
+  /// vocabulary cases are about.
+  format : Bool?
 }
 
 ///|
-/// Every directory the gate runs.
+/// Every reading the gate performs.
 let runs : Array[Run] = [
-  { directory: "draft4", draft: Draft4, },
-  { directory: "draft6", draft: Draft6, },
-  { directory: "draft7", draft: Draft7, },
-  { directory: "draft2019-09", draft: Draft2019, },
-  { directory: "draft2020-12", draft: Draft2020, },
-  { directory: "v1", draft: V1, },
-  { directory: "v1/proposals/propertyDependencies", draft: V1, },
+  { directory: "draft4", file: None, draft: Draft4, format: None, },
+  { directory: "draft6", file: None, draft: Draft6, format: None, },
+  { directory: "draft7", file: None, draft: Draft7, format: None, },
+  { directory: "draft2019-09", file: None, draft: Draft2019, format: None, },
+  { directory: "draft2020-12", file: None, draft: Draft2020, format: None, },
+  { directory: "v1", file: None, draft: V1, format: None, },
+  {
+    directory: "v1/proposals/propertyDependencies",
+    file: None,
+    draft: V1,
+    format: None,
+  },
+  {
+    directory: "draft4/optional/format",
+    file: None,
+    draft: Draft4,
+    format: Some(true),
+  },
+  {
+    directory: "draft6/optional/format",
+    file: None,
+    draft: Draft6,
+    format: Some(true),
+  },
+  {
+    directory: "draft7/optional/format",
+    file: None,
+    draft: Draft7,
+    format: Some(true),
+  },
+  {
+    directory: "draft2019-09/optional/format",
+    file: None,
+    draft: Draft2019,
+    format: Some(true),
+  },
+  {
+    directory: "draft2020-12/optional/format",
+    file: None,
+    draft: Draft2020,
+    format: Some(true),
+  },
+  { directory: "v1/format", file: None, draft: V1, format: Some(true), },
+  // The assertion vocabulary a metaschema may declare, which turns the keyword
+  // on with nobody asking.
+  {
+    directory: "draft2020-12/optional",
+    file: Some("format-assertion.json"),
+    draft: Draft2020,
+    format: None,
+  },
+  // And the keyword read as an annotation, which is what a caller who turns the
+  // assertion off gets.
+  {
+    directory: "v1/optional",
+    file: Some("format-annotation.json"),
+    draft: V1,
+    format: Some(false),
+  },
 ]
 
 ///|
 /// The cases that do not pass, and why.
 ///
-/// None. Every required case of every version passes, and the gate fails if
-/// that stops being true — or if one named here starts passing, because then
-/// this list would be describing something that is no longer so.
+/// None. Every case of every run passes, and the gate fails if that stops being
+/// true — or if one named here starts passing, because then this list would be
+/// describing something that is no longer so.
 let known : Array[String] = []
 
 ///|
-/// What one version's run came to.
+/// What one run came to.
 struct Tally {
   mut passed : Int32
   mut failed : Int32
@@ -47,7 +107,7 @@ struct Tally {
 }
 
 ///|
-/// Run every case of every version and print what passed.
+/// Run every case of every run and print what passed.
 ///
 /// A case that fails says which file, group and case it was, because a count
 /// that only goes up says nothing about which rule went wrong.
@@ -56,11 +116,11 @@ fn main {
   let mut total = 0
   let mut wrong = 0
   for run in runs {
-    let tally = measure(run.directory, run.draft, remotes)
+    let tally = measure(run, remotes)
     total = total + tally.passed + tally.failed
     wrong = wrong + tally.failed
     println(
-      run.directory.pad_start(38, ' ') +
+      label(run).pad_start(40, ' ') +
       ": " +
       tally.passed.to_string() +
       " passed, " +
@@ -91,25 +151,32 @@ fn main {
 }
 
 ///|
-/// Every file of one version, run.
-fn measure(
-  directory : String,
-  draft : @moonschema.Draft,
-  remotes : Map[String, Json],
-) -> Tally {
-  let tally = { passed: 0, failed: 0, first: [], }
-  let root = suite + "/tests/" + directory
-  let files = @fs.read_dir(root) catch {
-    _ => {
-      tally.first.push("no such directory: " + root)
-      return tally
-    }
+fn label(run : Run) -> String {
+  match run.file {
+    Some(file) => run.directory + "/" + file
+    None => run.directory
   }
-  let files = files.to_owned()
+}
+
+///|
+/// Every case of one run, run.
+fn measure(run : Run, remotes : Map[String, Json]) -> Tally {
+  let tally = { passed: 0, failed: 0, first: [], }
+  let root = suite + "/tests/" + run.directory
+  let files = match run.file {
+    Some(file) => [file]
+    None =>
+      (@fs.read_dir(root) catch {
+        _ => {
+          tally.first.push("no such directory: " + root)
+          return tally
+        }
+      }).to_owned()
+  }
   files.sort()
   for file in files {
-    // `optional/` is a directory, and what is in it are the cases the
-    // specification itself calls optional.
+    // A subdirectory is `optional/` or `proposals/`, and each of those is a run
+    // of its own: what is here is the files that hold cases.
     if !file.has_suffix(".json") {
       continue
     }
@@ -134,12 +201,12 @@ fn measure(
         Some(Array(found)) => found
         _ => continue
       }
-      let validator = @moonschema.Schema::new(schema, draft~, remotes~) catch {
+      let validator = build(run, schema, remotes) catch {
         error => {
           for _ in cases {
             tally.failed = tally.failed + 1
           }
-          if tally.first.length() < 60 {
+          if tally.first.length() < 80 {
             tally.first.push(
               file + " / " + title + ": schema refused: " + error.to_string(),
             )
@@ -159,14 +226,16 @@ fn measure(
           tally.passed = tally.passed + 1
         } else {
           tally.failed = tally.failed + 1
-          if tally.first.length() < 60 {
+          if tally.first.length() < 80 {
             tally.first.push(
               file +
               " / " +
               title +
               " / " +
               text_of(one.get("description")) +
-              ": wanted " +
+              ": " +
+              debug_text(data) +
+              " wanted " +
               wanted.to_string() +
               ", got " +
               got.to_string(),
@@ -177,6 +246,20 @@ fn measure(
     }
   }
   tally
+}
+
+///|
+/// The schema of one case group, read the way its run asks for.
+fn build(
+  run : Run,
+  schema : Json,
+  remotes : Map[String, Json],
+) -> @moonschema.Schema raise @moonschema.Refused {
+  match run.format {
+    Some(wanted) =>
+      @moonschema.Schema::new(schema, draft=run.draft, remotes~, format=wanted)
+    None => @moonschema.Schema::new(schema, draft=run.draft, remotes~)
+  }
 }
 
 ///|
@@ -231,6 +314,9 @@ let meta_documents : Array[(String, String)] = [
   (
     "https://json-schema.org/draft/2020-12/meta/format-annotation", "2020-12/format-annotation.json",
   ),
+  (
+    "https://json-schema.org/draft/2020-12/meta/format-assertion", "2020-12/format-assertion.json",
+  ),
   ("https://json-schema.org/draft/2020-12/meta/content", "2020-12/content.json"),
   (
     "https://json-schema.org/draft/2020-12/meta/unevaluated", "2020-12/unevaluated.json",
@@ -256,6 +342,52 @@ fn gather(
       match (@json.parse(text) catch { _ => continue }) {
         document => remotes[uri] = document
       }
+    }
+  }
+}
+
+///|
+/// The instance a case turned on, so that a failure names what it was about.
+fn debug_text(value : Json) -> String {
+  let out = StringBuilder()
+  write_json(value, out)
+  out.to_string()
+}
+
+///|
+fn write_json(value : Json, out : StringBuilder) -> Unit {
+  match value {
+    Null => out.write_string("null")
+    True => out.write_string("true")
+    False => out.write_string("false")
+    Number(number, ..) => out.write_string(number.to_string())
+    String(text) => {
+      out.write_char('"')
+      out.write_string(text)
+      out.write_char('"')
+    }
+    Array(items) => {
+      out.write_char('[')
+      for index, item in items {
+        if index > 0 {
+          out.write_char(',')
+        }
+        write_json(item, out)
+      }
+      out.write_char(']')
+    }
+    Object(fields) => {
+      out.write_char('{')
+      let mut more = false
+      for name, held in fields {
+        if more {
+          out.write_char(',')
+        }
+        more = true
+        out.write_string("\"" + name + "\":")
+        write_json(held, out)
+      }
+      out.write_char('}')
     }
   }
 }

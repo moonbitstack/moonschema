@@ -160,6 +160,19 @@ fn Draft::vocabularies(self : Draft) -> Bool {
 }
 
 ///|
+/// Whether this version asserts `format` without being asked.
+///
+/// Before v1 the keyword is an annotation unless the schema's own dialect
+/// declares the assertion vocabulary; v1 made assertion the requirement, so a v1
+/// document asserts it unless its reader says otherwise.
+fn Draft::asserts_format(self : Draft) -> Bool {
+  match self {
+    Draft4 | Draft6 | Draft7 | Draft2019 | Draft2020 => false
+    V1 => true
+  }
+}
+
+///|
 /// Whether this version spells the tuple form of `items` as `prefixItems`, which
 /// 2020-12 introduced and v1 kept.
 fn Draft::prefix_items(self : Draft) -> Bool {
