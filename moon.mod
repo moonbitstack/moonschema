@@ -17,12 +17,12 @@ keywords = [
   "moonbit",
 ]
 
-description = "JSON Schema validation for MoonBit, draft-04 to 2020-12."
+description = "JSON Schema validation for MoonBit, draft-04 through v1: four output formats, nineteen format names, and vocabularies from outside."
 
 source = "src"
 
 import {
+  "moonbitstack/moondate@0.1.0",
   "moonbitstack/moonregex@0.1.2",
   "moonbitstack/moonurl@0.2.3",
-  "moonbitstack/moondate@0.1.0",
 }
