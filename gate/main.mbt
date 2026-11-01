@@ -295,11 +295,23 @@ fn load_remotes() -> Map[String, Json] {
   // validator itself does not carry: a caller feeds it what it may reach, and
   // here the caller is this harness. They are the published documents, kept in
   // `meta/` because they are frozen and fetching them would be I/O in a test.
+  let missing : Array[String] = []
   for name in meta_documents {
-    let text = @fs.read_file_to_string("meta/" + name.1) catch { _ => continue }
+    let text = @fs.read_file_to_string("meta/" + name.1) catch {
+      _ => {
+        missing.push(name.1)
+        continue
+      }
+    }
     match (@json.parse(text) catch { _ => continue }) {
       document => remotes[name.0] = document
     }
+  }
+  // A document the harness means to feed and cannot find would make the cases
+  // that reach it pass for the wrong reason, so it is a failure of the harness
+  // rather than a quietly absent remote.
+  if missing.length() > 0 {
+    abort("no such metaschema in meta/: " + missing.join(", "))
   }
   // The schemas that say what an output has to look like, which the output tests
   // reference by the URI each publishes under.
