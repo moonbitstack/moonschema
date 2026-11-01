@@ -45,15 +45,23 @@
 <li><a href="#values">Values</a><ol class="sub">
 <li><a href="#value-draft">draft</a></li>
 <li><a href="#value-output">output</a></li>
+<li><a href="#value-registry">registry</a></li>
 </ol></li>
 <li><a href="#types">Types</a><ol class="sub">
 <li><a href="#draft">Draft</a></li>
 <li><a href="#fault">Fault</a></li>
 <li><a href="#output">Output</a></li>
+<li><a href="#registry">Registry</a></li>
 <li><a href="#schema">Schema</a></li>
+<li><a href="#site">Site</a></li>
+<li><a href="#verdict">Verdict</a></li>
 </ol></li>
 <li><a href="#errors">Errors</a><ol class="sub">
 <li><a href="#refused">Refused</a></li>
+</ol></li>
+<li><a href="#traits">Traits</a><ol class="sub">
+<li><a href="#keyword">Keyword</a></li>
+<li><a href="#vocabulary">Vocabulary</a></li>
 </ol></li>
     </ol>
   </aside>
@@ -81,6 +89,11 @@
 <div class="sig"><span class="k">pub</span> <span class="k">let</span> output : Output</div>
 <p>The output format a validation produces unless asked for another.</p><p><code>Flag</code>, because the common case is a guard that wants a yes or a no and collecting errors nobody reads is work nobody asked for. A caller that wants to tell someone what went wrong asks for <code>Basic</code>.</p>
 </div>
+<div class="entry" id="value-registry">
+<h3><span class="kind">let</span>registry</h3>
+<div class="sig"><span class="k">pub</span> <span class="k">let</span> registry : Registry</div>
+<p>No vocabularies beyond the built-in ones.</p>
+</div>
 </div>
 <div class="kind-group"><p class="g" id="types">Types</p>
 <div class="entry" id="draft">
@@ -103,6 +116,13 @@
 <div class="sig"><span class="k">pub</span>(all) <span class="k">enum</span> Output {</div>
 <ul class="variants"><li>Flag<small>Whether it validated, and nothing else. The cheapest, and what a guard on a request wants.</small></li><li>Basic<small>A flat list of the errors, each with the location in the instance and in the schema.</small></li><li>Detailed<small>The errors as a tree, with the schema's own structure preserved.</small></li><li>Verbose<small>Every annotation as well as every error, which is what a tool that explains a schema to a person needs.</small></li></ul>
 </div>
+<div class="entry" id="registry">
+<h3><span class="kind">struct</span>Registry</h3>
+<p>The vocabularies a caller can offer a document, by URI.</p><p>A registry is not global: two schemas in one program may be read against different vocabularies, and a schema is read against what its own caller handed it. <code>registry</code> is the empty one, which is what a caller who adds nothing gets; a caller with vocabularies of their own starts from <code>Registry::new</code>.</p>
+<div class="sig"><span class="k">pub</span> <span class="k">struct</span> Registry</div>
+<div class="member" id="registry-add"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Registry::add(Self, &amp;Vocabulary) -&gt; Unit raise Refused</div><p>Add a vocabulary.</p><p>It is refused when the vocabulary's URI is already held, when one of its keywords is a name a built-in keyword answers to, or when one of them is a name another vocabulary already took. A clash is refused rather than resolved in someone's favour: a keyword that quietly means one thing to the library and another to the document is worse than one that does not load.</p></div>
+<div class="member" id="registry-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Registry::new() -&gt; Self</div><p>A registry that holds nothing, and answers for no name but the built-in ones.</p></div>
+</div>
 <div class="entry" id="schema">
 <h3><span class="kind">struct</span>Schema</h3>
 <p>A schema document, read and ready to validate instances against.</p><p>The version is the one the document names in <code>$schema</code>, whatever <code>draft</code> said; a document is more specific than a setting. <code>remotes</code> are the documents a <code>$ref</code> may reach outside this one, by the URI each is registered under: this library opens no sockets, so what is not fed to it does not exist.</p>
@@ -122,6 +142,18 @@ schema.valid(@json.parse("{\"id\": 1}"))   // true</pre></div>
 schema.valid(@json.parse("7"))          // true
 schema.valid(@json.parse("\"seven\""))   // false</pre></div>
 </div>
+<div class="entry" id="site">
+<h3><span class="kind">struct</span>Site</h3>
+<p>Where a keyword sits, for the benefit of a keyword that has to say where it looked.</p>
+<div class="sig"><span class="k">pub</span>(all) <span class="k">struct</span> Site {</div>
+<ul class="variants"><li>at : String<small>Where in the instance, as a JSON Pointer; empty for the instance itself.</small></li><li>schema_at : String<small>Where in the schema, as a JSON Pointer, following the walk that arrived.</small></li></ul>
+</div>
+<div class="entry" id="verdict">
+<h3><span class="kind">enum</span>Verdict</h3>
+<p>What a keyword says about one instance.</p>
+<div class="sig"><span class="k">pub</span>(all) <span class="k">enum</span> Verdict {</div>
+<ul class="variants"><li>Accept(annotation~ : Json?)<small>It conforms. <code>annotation</code> is what the keyword contributes to the output when the caller asks for annotations; <code>None</code> when it contributes nothing.</small></li><li>Refuse(why~ : String)<small>It does not conform, and this says why in one clause.</small></li></ul>
+</div>
 </div>
 <div class="kind-group"><p class="g" id="errors">Errors</p>
 <div class="entry" id="refused">
@@ -129,6 +161,22 @@ schema.valid(@json.parse("\"seven\""))   // false</pre></div>
 <p>Why a schema could not be read.</p><p>These are faults in the schema, not in the instance an instance that fails validation produces <code>Fault</code>s instead.</p>
 <div class="sig"><span class="k">pub</span>(all) <span class="k">suberror</span> Refused {</div>
 <ul class="variants"><li>Unknown(String)</li><li>Broken(at~ : String, why~ : String)</li></ul>
+</div>
+</div>
+<div class="kind-group"><p class="g" id="traits">Traits</p>
+<div class="entry" id="keyword">
+<h3><span class="kind">trait</span>Keyword</h3>
+<p>A keyword someone outside this library defines.</p><p>It is written in a schema as <code>Keyword::name</code> and read once per instance, with the keyword's own value, the instance, and where both sit. It asserts, annotates, or both; it does not apply subschemas — a keyword that has to walk a subschema is an applicator, and applicators are this library's own.</p><pre data-lang="moonbit">struct Even {}</pre><p>pub impl Keyword for Even with fn name(_self) { "x-even" }</p><p>pub impl Keyword for Even with fn judge(_self, value, instance, site) { ignore(site) match (value, instance) { (True, Number(number, ..)) =&gt; if number % 2.0 == 0.0 { Accept() } else { Refuse("odd") } _ =&gt; Accept() } }</p><p>pub extend Even with Keyword::{name, judge} ```</p>
+<div class="sig"><span class="k">pub</span>(open) <span class="k">trait</span> Keyword {</div>
+<div class="member" id="keyword-name"><div class="sig"><span class="k">fn</span> name(Self) -&gt; String</div><p>The name it is written as in a schema.</p></div>
+<div class="member" id="keyword-judge"><div class="sig"><span class="k">fn</span> judge(Self, Json, Json, Site) -&gt; Verdict</div><p>What it says about <code>instance</code> at <code>site</code>.</p></div>
+</div>
+<div class="entry" id="vocabulary">
+<h3><span class="kind">trait</span>Vocabulary</h3>
+<p>A set of keywords that a document puts in force by naming its URI in <code>$vocabulary</code>.</p><p>The URI is the one the schema's metaschema uses — a vocabulary is identified by an absolute URI, conventionally one ending in <code>/vocab/&lt;name&gt;</code>. A document whose metaschema names this URI with <code>true</code> gets the keywords; with <code>false</code>, they annotate and assert nothing.</p>
+<div class="sig"><span class="k">pub</span>(open) <span class="k">trait</span> Vocabulary {</div>
+<div class="member" id="vocabulary-uri"><div class="sig"><span class="k">fn</span> uri(Self) -&gt; String</div><p>The URI a <code>$vocabulary</code> names it by.</p></div>
+<div class="member" id="vocabulary-keywords"><div class="sig"><span class="k">fn</span> keywords(Self) -&gt; Array[&amp;Keyword]</div><p>The keywords it defines.</p></div>
 </div>
 </div>
 

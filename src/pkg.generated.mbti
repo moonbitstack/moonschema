@@ -10,6 +10,8 @@ pub let draft : Draft
 
 pub let output : Output
 
+pub let registry : Registry
+
 // Errors
 pub(all) suberror Refused {
   Unknown(String)
@@ -65,6 +67,12 @@ pub fn Output::to_repr(Self) -> @debug.Repr
 pub fn Output::to_string(Self) -> String
 pub impl Show for Output
 
+pub struct Registry {
+  // private fields
+}
+pub fn Registry::add(Self, &Vocabulary) -> Unit raise Refused
+pub fn Registry::new() -> Self
+
 pub struct Schema {
   // private fields
 }
@@ -72,6 +80,31 @@ pub fn Schema::faults(Self, Json) -> Array[Fault]
 pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json]) -> Self raise Refused
 pub fn Schema::valid(Self, Json) -> Bool
 
+pub(all) struct Site {
+  at : String
+  schema_at : String
+} derive(Eq, @debug.Debug)
+pub fn Site::equal(Self, Self) -> Bool
+pub fn Site::not_equal(Self, Self) -> Bool
+pub fn Site::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Verdict {
+  Accept(annotation~ : Json?)
+  Refuse(why~ : String)
+} derive(Eq, @debug.Debug)
+pub fn Verdict::equal(Self, Self) -> Bool
+pub fn Verdict::not_equal(Self, Self) -> Bool
+pub fn Verdict::to_repr(Self) -> @debug.Repr
+
 // Type aliases
 
 // Traits
+pub(open) trait Keyword {
+  fn name(Self) -> String
+  fn judge(Self, Json, Json, Site) -> Verdict
+}
+
+pub(open) trait Vocabulary {
+  fn uri(Self) -> String
+  fn keywords(Self) -> Array[&Keyword]
+}

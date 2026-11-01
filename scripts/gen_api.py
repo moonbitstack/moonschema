@@ -68,7 +68,8 @@ def docs_of(folder):
                     out[match.group(2)] = "\n".join(pending)
                 owner = (
                     match.group(2)
-                    if match.group(1) in ("enum", "struct") and line.rstrip().endswith("{")
+                    if match.group(1) in ("enum", "struct", "trait")
+                    and line.rstrip().endswith("{")
                     else None
                 )
                 pending, block = [], []
@@ -77,6 +78,14 @@ def docs_of(folder):
                 if line.startswith("}"):
                     owner = None
                 else:
+                    # A trait's members are its methods, and its method names are
+                    # what a reader looks up: `Keyword.judge`, not `judge`.
+                    method = re.match(r"^\s+fn\s+([A-Za-z_]\w*)", line)
+                    if method:
+                        if pending:
+                            out[owner + "." + method.group(1)] = "\n".join(pending)
+                        pending = []
+                        continue
                     member = re.match(r"^\s+([A-Za-z_]\w*)\s*(?:\(.*\)|:.*)?\s*(?://\s*(.*))?$", line)
                     if member:
                         if member.group(2):
@@ -102,7 +111,7 @@ def items_of(folder):
                 if body_line and not body_line.startswith("//"):
                     block["body"].append(body_line)
             continue
-        match = re.match(r"pub(?:\((?:all|open)\))?\s+(enum|struct|suberror)\s+(\w+)", line)
+        match = re.match(r"pub(?:\((?:all|open)\))?\s+(enum|struct|suberror|trait)\s+(\w+)", line)
         if match:
             block = {
                 "kind": match.group(1),
@@ -183,7 +192,7 @@ def prose(text):
 
 def sig(text):
     clean = html.escape(text.strip(), quote=False)
-    clean = re.sub(r"\b(pub|fn|let|struct|enum|suberror)\b", r'<span class="k">\1</span>', clean)
+    clean = re.sub(r"\b(pub|fn|let|struct|enum|suberror|trait)\b", r'<span class="k">\1</span>', clean)
     return f'<div class="sig">{clean}</div>'
 
 
@@ -204,6 +213,7 @@ def render():
             [i for i in items if i["kind"] in ("enum", "struct")], key=lambda i: i["name"]
         )
         errors = sorted([i for i in items if i["kind"] == "suberror"], key=lambda i: i["name"])
+        traits = sorted([i for i in items if i["kind"] == "trait"], key=lambda i: i["name"])
 
         methods = {}
         for item in items:
@@ -227,6 +237,12 @@ def render():
         for error in errors:
             nav.append(f'<li><a href="#{anchor(error["name"])}">{error["name"]}</a></li>')
         nav.append("</ol></li>")
+
+        if traits:
+            nav.append('<li><a href="#traits">Traits</a><ol class="sub">')
+            for trait in traits:
+                nav.append(f'<li><a href="#{anchor(trait["name"])}">{trait["name"]}</a></li>')
+            nav.append("</ol></li>")
 
         if values:
             bodies.append('<div class="kind-group"><p class="g" id="values">Values</p>')
@@ -290,6 +306,26 @@ def render():
                             + "</li>"
                         )
                     bodies.append(f'<ul class="variants">{"".join(chips)}</ul>')
+                bodies.append("</div>")
+            bodies.append("</div>")
+
+        if traits:
+            bodies.append('<div class="kind-group"><p class="g" id="traits">Traits</p>')
+            for trait in traits:
+                bodies.append(f'<div class="entry" id="{anchor(trait["name"])}">')
+                bodies.append(
+                    f'<h3><span class="kind">trait</span>{trait["name"]}</h3>'
+                )
+                bodies.append(prose(docs.get(trait["name"], "")))
+                bodies.append(sig(trait["sig"] + (" {" if trait["body"] else "")))
+                for method in trait["body"]:
+                    name = re.match(r"fn\s+([A-Za-z_]\w*)", method).group(1)
+                    bodies.append(
+                        f'<div class="member" id="{anchor(trait["name"] + "::" + name)}">'
+                        + sig(method)
+                        + prose(docs.get(f'{trait["name"]}.{name}', ""))
+                        + "</div>"
+                    )
                 bodies.append("</div>")
             bodies.append("</div>")
 
