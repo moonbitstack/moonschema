@@ -91,6 +91,13 @@ let runs : Array[Run] = [
 ]
 
 ///|
+/// The output-test directories, each with the version whose formats it checks.
+let output_runs : Array[(String, @moonschema.Draft)] = [
+  ("draft2019-09", Draft2019),
+  ("draft2020-12", Draft2020),
+]
+
+///|
 /// The cases that do not pass, and why.
 ///
 /// None. Every case of every run passes, and the gate fails if that stops being
@@ -121,6 +128,22 @@ fn main {
     wrong = wrong + tally.failed
     println(
       label(run).pad_start(40, ' ') +
+      ": " +
+      tally.passed.to_string() +
+      " passed, " +
+      tally.failed.to_string() +
+      " failed",
+    )
+    for line in tally.first {
+      println("    " + line)
+    }
+  }
+  for outputs in output_runs {
+    let tally = measure_outputs(outputs.0, outputs.1, remotes)
+    total = total + tally.passed + tally.failed
+    wrong = wrong + tally.failed
+    println(
+      ("outputs: " + outputs.0).pad_start(40, ' ') +
       ": " +
       tally.passed.to_string() +
       " passed, " +
@@ -278,8 +301,28 @@ fn load_remotes() -> Map[String, Json] {
       document => remotes[name.0] = document
     }
   }
+  // The schemas that say what an output has to look like, which the output tests
+  // reference by the URI each publishes under.
+  for published in output_schemas {
+    let path = suite + "/output-tests/" + published.1
+    let text = @fs.read_file_to_string(path) catch { _ => continue }
+    match (@json.parse(text) catch { _ => continue }) {
+      document => remotes[published.0] = document
+    }
+  }
   remotes
 }
+
+///|
+/// Each published output schema, by the URI a case references it as.
+let output_schemas : Array[(String, String)] = [
+  (
+    "https://json-schema.org/draft/2019-09/output/schema", "draft2019-09/output-schema.json",
+  ),
+  (
+    "https://json-schema.org/draft/2020-12/output/schema", "draft2020-12/output-schema.json",
+  ),
+]
 
 ///|
 /// Each metaschema, by the URI a schema references it as.
@@ -397,5 +440,137 @@ fn text_of(value : Json?) -> String {
   match value {
     Some(String(text)) => text
     _ => "?"
+  }
+}
+
+///|
+/// The output tests: for each case, produce the report in the format the case
+/// names and validate it against the schema the case gives.
+///
+/// The schema in the case is a schema, so the check is the same validator
+/// reading a different document — and the `$ref` it opens with,
+/// `/draft/2020-12/output/schema`, resolves against the case's own `$id` into the
+/// published output schema, which this harness feeds in as a remote.
+fn measure_outputs(
+  directory : String,
+  draft : @moonschema.Draft,
+  remotes : Map[String, Json],
+) -> Tally {
+  let tally = { passed: 0, failed: 0, first: [], }
+  let root = suite + "/output-tests/" + directory + "/content"
+  let files = (@fs.read_dir(root) catch {
+    _ => {
+      tally.first.push("no such directory: " + root)
+      return tally
+    }
+  }).to_owned()
+  files.sort()
+  for file in files {
+    if !file.has_suffix(".json") {
+      continue
+    }
+    let text = @fs.read_file_to_string(root + "/" + file) catch {
+      _ => continue
+    }
+    let groups = @json.parse(text) catch {
+      _ => {
+        tally.first.push(file + ": unreadable")
+        continue
+      }
+    }
+    guard groups is Array(all) else { continue }
+    for group in all {
+      guard group is Object(fields) else { continue }
+      let title = text_of(fields.get("description"))
+      let schema = match fields.get("schema") {
+        Some(found) => found
+        None => continue
+      }
+      let cases = match fields.get("tests") {
+        Some(Array(found)) => found
+        _ => continue
+      }
+      let validator = @moonschema.Schema::new(schema, draft~) catch {
+        error => {
+          tally.first.push(
+            file + " / " + title + ": schema refused: " + error.to_string(),
+          )
+          continue
+        }
+      }
+      for instance in cases {
+        guard instance is Object(one) else { continue }
+        let data = match one.get("data") {
+          Some(found) => found
+          None => Json::null()
+        }
+        let wanted = match one.get("output") {
+          Some(Object(found)) => found
+          _ => continue
+        }
+        for name, expectation in wanted {
+          let format = match output_of(name) {
+            Some(found) => found
+            None => continue
+          }
+          let report = validator.report(data, output=format)
+          let produced = report.to_json()
+          let check = @moonschema.Schema::new(
+            expectation,
+            draft~,
+            remotes~,
+            format=true,
+          ) catch {
+            error => {
+              tally.failed = tally.failed + 1
+              tally.first.push(
+                file +
+                " / " +
+                title +
+                ": output schema refused: " +
+                error.to_string(),
+              )
+              continue
+            }
+          }
+          if check.valid(produced) {
+            tally.passed = tally.passed + 1
+          } else {
+            tally.failed = tally.failed + 1
+            if tally.first.length() < 80 {
+              tally.first.push(
+                file +
+                " / " +
+                title +
+                " / " +
+                text_of(one.get("description")) +
+                " / " +
+                name +
+                ": " +
+                debug_text(produced) +
+                " was refused: " +
+                check
+                .faults(produced)
+                .map(fn(fault) { fault.to_string() })
+                .join("; "),
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+  tally
+}
+
+///|
+/// The name a case writes a format by.
+fn output_of(name : String) -> @moonschema.Output? {
+  match name {
+    "flag" => Some(Flag)
+    "basic" => Some(Basic)
+    "detailed" => Some(Detailed)
+    "verbose" => Some(Verbose)
+    _ => None
   }
 }

@@ -68,17 +68,43 @@ pub fn Output::to_repr(Self) -> @debug.Repr
 pub fn Output::to_string(Self) -> String
 pub impl Show for Output
 
+pub(all) struct OutputUnit {
+  valid : Bool
+  keyword_at : String
+  absolute_at : String?
+  at : String
+  error : String?
+  annotation : Json?
+  children : Array[OutputUnit]
+} derive(Eq, @debug.Debug)
+pub fn OutputUnit::equal(Self, Self) -> Bool
+pub fn OutputUnit::not_equal(Self, Self) -> Bool
+pub fn OutputUnit::to_json(Self) -> Json
+pub fn OutputUnit::to_repr(Self) -> @debug.Repr
+pub impl ToJson for OutputUnit
+
 pub struct Registry {
   // private fields
 }
 pub fn Registry::add(Self, &Vocabulary) -> Unit raise Refused
 pub fn Registry::new() -> Self
 
+pub(all) struct Report {
+  valid : Bool
+  units : Array[OutputUnit]
+} derive(Eq, @debug.Debug)
+pub fn Report::equal(Self, Self) -> Bool
+pub fn Report::not_equal(Self, Self) -> Bool
+pub fn Report::to_json(Self) -> Json
+pub fn Report::to_repr(Self) -> @debug.Repr
+pub impl ToJson for Report
+
 pub struct Schema {
   // private fields
 }
 pub fn Schema::faults(Self, Json) -> Array[Fault]
 pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json], format? : Bool) -> Self raise Refused
+pub fn Schema::report(Self, Json, output? : Output) -> Report
 pub fn Schema::valid(Self, Json) -> Bool
 
 pub(all) struct Site {

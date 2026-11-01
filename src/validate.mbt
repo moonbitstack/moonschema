@@ -216,8 +216,10 @@ pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
 ///|
 /// Every reason `instance` failed, or an empty array when it validated.
 ///
-/// This is the basic output (§12.4.2), flattened: each fault says where in the
+/// The reasons, and not the shape of the walk: each fault says where in the
 /// instance it was, which keyword refused it, and where that keyword was.
+/// [`Schema::report`] is the other reading of the same walk, in the four formats
+/// §12 names.
 ///
 /// ```moonbit nocheck
 /// let schema = @moonschema.Schema::new(
@@ -229,12 +231,56 @@ pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
 /// // the instance: below the minimum (minimum at /minimum)
 /// ```
 pub fn Schema::faults(self : Schema, instance : Json) -> Array[Fault] {
-  let faults : Array[Fault] = []
+  let collected : Array[OutputUnit] = []
   self.scope.clear()
   self.scope.push(self.base)
-  self.check(self.root, self.base, instance, "", "", Some(faults), Marks::new())
+  self.check(
+    self.root,
+    self.base,
+    instance,
+    "",
+    "",
+    Some(collected),
+    Marks::new(),
+  )
   |> ignore
+  // Every reason, in the order the walk found them: a branch node says only
+  // that something under it failed, and a caller asking for reasons wants the
+  // leaves that failed.
+  let faults : Array[Fault] = []
+  gather_reasons(collected, faults)
   faults
+}
+
+///|
+/// The leaves of the tree that hold a reason, in order.
+fn gather_reasons(units : Array[OutputUnit], out : Array[Fault]) -> Unit {
+  for unit in units {
+    match unit.error {
+      Some(message) =>
+        out.push({
+          at: unit.at,
+          schema_at: unit.keyword_at,
+          keyword: last_step(unit.keyword_at),
+          message,
+        })
+      None => ()
+    }
+    gather_reasons(unit.children, out)
+  }
+}
+
+///|
+/// The last step of a pointer, unescaped: the keyword a reason is about.
+fn last_step(path : String) -> String {
+  let text = path[:]
+  let mut start = 0
+  for i = 0; i < text.length(); i = i + 1 {
+    if text[i] == '/' {
+      start = i + 1
+    }
+  }
+  unescape(text[start:].to_owned())
 }
 
 // ------------------------------------------------------------------ annotation

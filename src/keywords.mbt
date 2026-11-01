@@ -12,7 +12,7 @@ fn Schema::check_type(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
 ) -> Bool {
   ignore(self)
   match schema {
@@ -20,7 +20,7 @@ fn Schema::check_type(
       if is_type(value, name) {
         true
       } else {
-        note(faults, at, spath, "type", "not of type " + name)
+        note(sink, at, spath, "type", "not of type " + name)
       }
     Array(names) => {
       for name in names {
@@ -28,7 +28,7 @@ fn Schema::check_type(
           return true
         }
       }
-      note(faults, at, spath, "type", "not of any allowed type")
+      note(sink, at, spath, "type", "not of any allowed type")
     }
     _ => true
   }
@@ -48,7 +48,7 @@ fn Schema::check_bound(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   upper : Bool,
 ) -> Bool {
   guard schema is Number(limit, ..) && value is Number(number, ..) else {
@@ -73,7 +73,7 @@ fn Schema::check_bound(
     true
   } else {
     note(
-      faults,
+      sink,
       at,
       spath,
       keyword,
@@ -103,7 +103,7 @@ fn Schema::check_items(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   guard value is Array(items) else { return true }
@@ -111,9 +111,7 @@ fn Schema::check_items(
   match keyword {
     "prefixItems" =>
       if modern && schema is Array(schemas) {
-        self.each_item(
-          schemas, base, items, 0, at, spath, keyword, faults, marks,
-        )
+        self.each_item(schemas, base, items, 0, at, spath, keyword, sink, marks)
       } else {
         true
       }
@@ -127,7 +125,7 @@ fn Schema::check_items(
           at,
           spath,
           keyword,
-          faults,
+          sink,
           marks,
         )
       } else {
@@ -140,17 +138,17 @@ fn Schema::check_items(
           _ => 0
         }
         self.rest_items(
-          schema, base, items, prefix, at, spath, keyword, faults, marks,
+          schema, base, items, prefix, at, spath, keyword, sink, marks,
         )
       } else {
         match schema {
           Array(schemas) =>
             self.each_item(
-              schemas, base, items, 0, at, spath, keyword, faults, marks,
+              schemas, base, items, 0, at, spath, keyword, sink, marks,
             )
           _ =>
             self.rest_items(
-              schema, base, items, 0, at, spath, keyword, faults, marks,
+              schema, base, items, 0, at, spath, keyword, sink, marks,
             )
         }
       }
@@ -169,7 +167,7 @@ fn Schema::each_item(
   at : String,
   spath : String,
   keyword : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   let mut every = true
@@ -181,13 +179,13 @@ fn Schema::each_item(
         items[index],
         step(at, index.to_string()),
         step(step(spath, keyword), i.to_string()),
-        faults,
+        sink,
         Marks::new(),
       ) {
       marks.idx.add(index)
     } else {
       every = false
-      if faults is None {
+      if sink is None {
         break
       }
     }
@@ -206,7 +204,7 @@ fn Schema::rest_items(
   at : String,
   spath : String,
   keyword : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   let mut every = true
@@ -217,13 +215,13 @@ fn Schema::rest_items(
         items[index],
         step(at, index.to_string()),
         step(spath, keyword),
-        faults,
+        sink,
         Marks::new(),
       ) {
       marks.idx.add(index)
     } else {
       every = false
-      if faults is None {
+      if sink is None {
         break
       }
     }
@@ -245,7 +243,7 @@ fn Schema::check_contains(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   // `contains` arrived in draft-06.
@@ -276,13 +274,11 @@ fn Schema::check_contains(
   }
   if found < least {
     return note(
-      faults, at, spath, "contains", "fewer matching items than required",
+      sink, at, spath, "contains", "fewer matching items than required",
     )
   }
   if most >= 0 && found > most {
-    return note(
-      faults, at, spath, "contains", "more matching items than allowed",
-    )
+    return note(sink, at, spath, "contains", "more matching items than allowed")
   }
   true
 }
@@ -299,7 +295,7 @@ fn Schema::check_properties(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   guard value is Object(instance) else { return true }
@@ -317,7 +313,7 @@ fn Schema::check_properties(
                     held,
                     step(at, name),
                     step(step(spath, keyword), name),
-                    faults,
+                    sink,
                     Marks::new(),
                   ) {
                   marks.props.add(name)
@@ -341,7 +337,7 @@ fn Schema::check_properties(
                     held,
                     step(at, name),
                     step(step(spath, keyword), expression),
-                    faults,
+                    sink,
                     Marks::new(),
                   ) {
                   marks.props.add(name)
@@ -382,7 +378,7 @@ fn Schema::check_properties(
             held,
             step(at, name),
             step(spath, keyword),
-            faults,
+            sink,
             Marks::new(),
           ) {
           marks.props.add(name)
@@ -406,7 +402,7 @@ fn Schema::check_dependencies(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   guard value is Object(instance) && schema is Object(entries) else {
@@ -429,13 +425,7 @@ fn Schema::check_dependencies(
         let mut all = true
         for needed in names {
           if needed is String(text) && instance.get(text) is None {
-            all = note(
-              faults,
-              at,
-              step(spath, name),
-              keyword,
-              "missing " + text,
-            )
+            all = note(sink, at, step(spath, name), keyword, "missing " + text)
           }
         }
         all
@@ -451,7 +441,7 @@ fn Schema::check_dependencies(
           value,
           at,
           step(spath, name),
-          faults,
+          sink,
           inner,
         )
         if passed {
@@ -462,7 +452,7 @@ fn Schema::check_dependencies(
     }
     if !ok {
       every = false
-      if faults is None {
+      if sink is None {
         break
       }
     }
@@ -484,7 +474,7 @@ fn Schema::check_property_dependencies(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   if self.draft != V1 {
@@ -506,13 +496,13 @@ fn Schema::check_property_dependencies(
                 value,
                 at,
                 step(step(spath, name), held),
-                faults,
+                sink,
                 inner,
               ) {
               marks.take(inner)
             } else {
               every = false
-              if faults is None {
+              if sink is None {
                 break
               }
             }
@@ -536,7 +526,7 @@ fn Schema::check_unevaluated(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   let mut every = true
@@ -553,7 +543,7 @@ fn Schema::check_unevaluated(
               items[index],
               step(at, index.to_string()),
               step(spath, "unevaluatedItems"),
-              faults,
+              sink,
               Marks::new(),
             ) {
             marks.idx.add(index)
@@ -576,7 +566,7 @@ fn Schema::check_unevaluated(
             held,
             step(at, name),
             step(spath, "unevaluatedProperties"),
-            faults,
+            sink,
             Marks::new(),
           ) {
           marks.props.add(name)

@@ -6,7 +6,7 @@
 // assertions that look at it.
 
 ///|
-/// Whether `value` validates against `node`, recording every reason in `faults`
+/// Whether `value` validates against `node`, recording every reason in `sink`
 /// when the caller asked for them.
 ///
 /// `marks` is what this schema evaluated, which is what an `unevaluated*` keyword
@@ -19,14 +19,14 @@ fn Schema::check(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   match node {
     True => return true
     False =>
       return note(
-        faults, at, spath, "schema", "no instance validates against false",
+        sink, at, spath, "schema", "no instance validates against false",
       )
     Object(members) => {
       let here = match
@@ -55,7 +55,7 @@ fn Schema::check(
           value,
           at,
           step(spath, "$ref"),
-          faults,
+          sink,
           marks,
         )
       }
@@ -66,22 +66,31 @@ fn Schema::check(
         if !self.asserts && asserted(keyword) {
           continue
         }
+        // The reasons this keyword has to give become its children, so that the
+        // output has a node per keyword and a leaf per reason, which is the
+        // structure §12 asks for.
+        let reasons : Array[OutputUnit] = []
+        let inner : Array[OutputUnit]? = if sink is None {
+          None
+        } else {
+          Some(reasons)
+        }
         let passed = match keyword {
           "$ref" =>
             match schema {
               String(reference) =>
-                self.refer(reference, here, value, at, kpath, faults, own)
+                self.refer(reference, here, value, at, kpath, inner, own)
               _ => true
             }
           "$dynamicRef" | "$recursiveRef" =>
             match schema {
               String(reference) =>
                 self.refer_dynamic(
-                  reference, here, value, at, kpath, faults, own,
+                  reference, here, value, at, kpath, inner, own,
                 )
               _ => true
             }
-          "type" => self.check_type(schema, value, at, kpath, faults)
+          "type" => self.check_type(schema, value, at, kpath, inner)
           "enum" =>
             match schema {
               Array(allowed) =>
@@ -89,7 +98,7 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "enum", "not one of the allowed values",
+                    inner, at, kpath, "enum", "not one of the allowed values",
                   )
                 }
               _ => true
@@ -98,7 +107,7 @@ fn Schema::check(
             if same(schema, value) {
               true
             } else {
-              note(faults, at, kpath, "const", "not the constant value")
+              note(inner, at, kpath, "const", "not the constant value")
             }
           "multipleOf" =>
             match (schema, value) {
@@ -106,14 +115,14 @@ fn Schema::check(
                 if multiple_of(number, divisor) {
                   true
                 } else {
-                  note(faults, at, kpath, "multipleOf", "not a multiple")
+                  note(inner, at, kpath, "multipleOf", "not a multiple")
                 }
               _ => true
             }
           "maximum" =>
-            self.check_bound(members, schema, value, at, kpath, faults, true)
+            self.check_bound(members, schema, value, at, kpath, inner, true)
           "minimum" =>
-            self.check_bound(members, schema, value, at, kpath, faults, false)
+            self.check_bound(members, schema, value, at, kpath, inner, false)
           "exclusiveMaximum" =>
             match (schema, value) {
               (Number(limit, ..), Number(number, ..)) =>
@@ -121,7 +130,7 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "exclusiveMaximum", "above the maximum",
+                    inner, at, kpath, "exclusiveMaximum", "above the maximum",
                   )
                 }
               // Before draft-06 this was a flag on `maximum`, handled there.
@@ -134,7 +143,7 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "exclusiveMinimum", "below the minimum",
+                    inner, at, kpath, "exclusiveMinimum", "below the minimum",
                   )
                 }
               _ => true
@@ -145,7 +154,7 @@ fn Schema::check(
                 if code_points(text) <= limit.to_int() {
                   true
                 } else {
-                  note(faults, at, kpath, "maxLength", "longer than allowed")
+                  note(inner, at, kpath, "maxLength", "longer than allowed")
                 }
               _ => true
             }
@@ -155,11 +164,11 @@ fn Schema::check(
                 if code_points(text) >= limit.to_int() {
                   true
                 } else {
-                  note(faults, at, kpath, "minLength", "shorter than allowed")
+                  note(inner, at, kpath, "minLength", "shorter than allowed")
                 }
               _ => true
             }
-          "format" => self.check_format(schema, value, at, kpath, faults)
+          "format" => self.check_format(schema, value, at, kpath, inner)
           "pattern" =>
             match (schema, value) {
               (String(expression), String(text)) =>
@@ -167,18 +176,18 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "pattern", "does not match the pattern",
+                    inner, at, kpath, "pattern", "does not match the pattern",
                   )
                 }
               _ => true
             }
           "prefixItems" | "items" | "additionalItems" =>
             self.check_items(
-              members, keyword, schema, here, value, at, spath, faults, own,
+              members, keyword, schema, here, value, at, spath, inner, own,
             )
           "contains" =>
             self.check_contains(
-              members, schema, here, value, at, kpath, faults, own,
+              members, schema, here, value, at, kpath, inner, own,
             )
           "maxItems" =>
             match (schema, value) {
@@ -186,7 +195,7 @@ fn Schema::check(
                 if items.length() <= limit.to_int() {
                   true
                 } else {
-                  note(faults, at, kpath, "maxItems", "more items than allowed")
+                  note(inner, at, kpath, "maxItems", "more items than allowed")
                 }
               _ => true
             }
@@ -196,9 +205,7 @@ fn Schema::check(
                 if items.length() >= limit.to_int() {
                   true
                 } else {
-                  note(
-                    faults, at, kpath, "minItems", "fewer items than allowed",
-                  )
+                  note(inner, at, kpath, "minItems", "fewer items than allowed")
                 }
               _ => true
             }
@@ -208,13 +215,13 @@ fn Schema::check(
                 if unique(items) {
                   true
                 } else {
-                  note(faults, at, kpath, "uniqueItems", "two items are equal")
+                  note(inner, at, kpath, "uniqueItems", "two items are equal")
                 }
               _ => true
             }
           "properties" | "patternProperties" | "additionalProperties" =>
             self.check_properties(
-              members, keyword, schema, here, value, at, spath, faults, own,
+              members, keyword, schema, here, value, at, spath, inner, own,
             )
           "propertyNames" =>
             match value {
@@ -227,11 +234,11 @@ fn Schema::check(
                       Json::string(name),
                       step(at, name),
                       kpath,
-                      faults,
+                      inner,
                       Marks::new(),
                     ) {
                     every = false
-                    if faults is None {
+                    if inner is None {
                       break
                     }
                   }
@@ -249,13 +256,13 @@ fn Schema::check(
                     String(text) =>
                       if instance.get(text) is None {
                         every = note(
-                          faults,
+                          inner,
                           at,
                           kpath,
                           "required",
                           "missing " + text,
                         )
-                        if faults is None {
+                        if inner is None {
                           break
                         }
                       }
@@ -273,7 +280,7 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "maxProperties", "more properties than allowed",
+                    inner, at, kpath, "maxProperties", "more properties than allowed",
                   )
                 }
               _ => true
@@ -285,18 +292,18 @@ fn Schema::check(
                   true
                 } else {
                   note(
-                    faults, at, kpath, "minProperties", "fewer properties than allowed",
+                    inner, at, kpath, "minProperties", "fewer properties than allowed",
                   )
                 }
               _ => true
             }
           "dependencies" | "dependentRequired" | "dependentSchemas" =>
             self.check_dependencies(
-              keyword, schema, here, value, at, kpath, faults, own,
+              keyword, schema, here, value, at, kpath, inner, own,
             )
           "propertyDependencies" =>
             self.check_property_dependencies(
-              schema, here, value, at, kpath, faults, own,
+              schema, here, value, at, kpath, inner, own,
             )
           "allOf" =>
             match schema {
@@ -310,13 +317,13 @@ fn Schema::check(
                       value,
                       at,
                       step(kpath, i.to_string()),
-                      faults,
+                      inner,
                       branch,
                     ) {
                     own.take(branch)
                   } else {
                     every = false
-                    if faults is None {
+                    if inner is None {
                       break
                     }
                   }
@@ -349,7 +356,7 @@ fn Schema::check(
                 if any {
                   true
                 } else {
-                  note(faults, at, kpath, "anyOf", "no branch validated")
+                  note(inner, at, kpath, "anyOf", "no branch validated")
                 }
               }
               _ => true
@@ -380,10 +387,10 @@ fn Schema::check(
                   own.take(winner)
                   true
                 } else if count == 0 {
-                  note(faults, at, kpath, "oneOf", "no branch validated")
+                  note(inner, at, kpath, "oneOf", "no branch validated")
                 } else {
                   note(
-                    faults,
+                    inner,
                     at,
                     kpath,
                     "oneOf",
@@ -396,7 +403,7 @@ fn Schema::check(
           "not" =>
             if self.check(schema, here, value, at, kpath, None, Marks::new()) {
               note(
-                faults, at, kpath, "not", "validated against the negated schema",
+                inner, at, kpath, "not", "validated against the negated schema",
               )
             } else {
               true
@@ -412,17 +419,17 @@ fn Schema::check(
             let arm = if taken { "then" } else { "else" }
             match members.get(arm) {
               Some(consequent) => {
-                let inner = Marks::new()
+                let branch = Marks::new()
                 if self.check(
                     consequent,
                     here,
                     value,
                     at,
                     step(spath, arm),
-                    faults,
                     inner,
+                    branch,
                   ) {
-                  own.take(inner)
+                  own.take(branch)
                   true
                 } else {
                   false
@@ -435,17 +442,28 @@ fn Schema::check(
           "then" | "else" => true
           _ => true
         }
+        match sink {
+          Some(list) =>
+            list.push({
+              valid: passed,
+              keyword_at: kpath,
+              absolute_at: None,
+              at,
+              error: None,
+              annotation: annotation_of(keyword, schema),
+              children: reasons,
+            })
+          None => ()
+        }
         if !passed {
           ok = false
-          if faults is None {
+          if sink is None {
             break
           }
         }
       }
       if ok && self.draft.vocabularies() {
-        ok = self.check_unevaluated(
-          members, here, value, at, spath, faults, own,
-        )
+        ok = self.check_unevaluated(members, here, value, at, spath, sink, own)
       }
       if ok {
         marks.take(own)
@@ -465,7 +483,7 @@ fn Schema::refer(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   match self.follow(base, reference) {
@@ -479,13 +497,13 @@ fn Schema::refer(
         self.scope.push(resource)
       }
       defer (if entered { self.scope.pop() |> ignore })
-      let ok = self.check(target, outside, value, at, spath, faults, inner)
+      let ok = self.check(target, outside, value, at, spath, sink, inner)
       if ok {
         marks.take(inner)
       }
       ok
     }
-    None => note(faults, at, spath, "$ref", "reference resolves to nothing")
+    None => note(sink, at, spath, "$ref", "reference resolves to nothing")
   }
 }
 
@@ -499,7 +517,7 @@ fn Schema::refer_dynamic(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   marks : Marks,
 ) -> Bool {
   let name = if reference == "#" { "" } else { split_fragment(reference).1 }
@@ -538,28 +556,38 @@ fn Schema::refer_dynamic(
   match target {
     Some((found, outside)) => {
       let inner = Marks::new()
-      let ok = self.check(found, outside, value, at, spath, faults, inner)
+      let ok = self.check(found, outside, value, at, spath, sink, inner)
       if ok {
         marks.take(inner)
       }
       ok
     }
     None =>
-      note(faults, at, spath, "$dynamicRef", "reference resolves to nothing")
+      note(sink, at, spath, "$dynamicRef", "reference resolves to nothing")
   }
 }
 
 ///|
 /// Record a fault, and answer `false` so a caller can `return note(...)`.
 fn note(
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
   at : String,
   schema_at : String,
   keyword : String,
   message : String,
 ) -> Bool {
-  match faults {
-    Some(list) => list.push({ at, schema_at, keyword, message, })
+  ignore(keyword)
+  match sink {
+    Some(list) =>
+      list.push({
+        valid: false,
+        keyword_at: schema_at,
+        absolute_at: None,
+        at,
+        error: Some(message),
+        annotation: None,
+        children: [],
+      })
     None => ()
   }
   false

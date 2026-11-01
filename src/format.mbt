@@ -56,7 +56,7 @@ fn Schema::check_format(
   value : Json,
   at : String,
   spath : String,
-  faults : Array[Fault]?,
+  sink : Array[OutputUnit]?,
 ) -> Bool {
   guard self.asserts_format else { return true }
   guard schema is String(name) && value is String(text) else { return true }
@@ -64,7 +64,7 @@ fn Schema::check_format(
   // failure of the instance, and only v1 makes it a failure of the schema.
   match judge_format(name, text, self.draft) {
     Some(true) => true
-    Some(false) => note(faults, at, spath, "format", "not a valid " + name)
+    Some(false) => note(sink, at, spath, "format", "not a valid " + name)
     None => true
   }
 }
