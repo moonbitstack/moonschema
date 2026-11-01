@@ -66,6 +66,12 @@ fn Schema::check(
         if !self.asserts && asserted(keyword) {
           continue
         }
+        // A keyword that addresses, defines or comments produces no result of
+        // its own: §12.1's output is of what was evaluated, and none of these
+        // evaluate an instance.
+        if !reported(keyword) {
+          continue
+        }
         // The reasons this keyword has to give become its children, so that the
         // output has a node per keyword and a leaf per reason, which is the
         // structure §12 asks for.
@@ -465,19 +471,24 @@ fn Schema::check(
             }
         }
         match sink {
-          Some(list) =>
+          Some(list) => {
+            // One keyword that had one thing to say says it on its own node
+            // rather than on a leaf under itself: the node is the result, and a
+            // second one below it at the same place is noise.
+            let (error, children) = fold(reasons, kpath, at)
             list.push({
               valid: passed,
               keyword_at: kpath,
               absolute_at: None,
               at,
-              error: None,
+              error,
               annotation: match annotation_of(keyword, schema) {
                 Some(found) => Some(found)
                 None => given
               },
-              children: reasons,
+              children,
             })
+          }
           None => ()
         }
         if !passed {
@@ -616,6 +627,52 @@ fn note(
     None => ()
   }
   false
+}
+
+///|
+/// Whether a keyword produces a result of its own.
+///
+/// The core keywords address, define and comment: they evaluate no instance, and
+/// an output unit for one would say nothing about the instance. `then` and `else`
+/// are applied by `if`, which is the applicator that gets the node.
+fn reported(keyword : String) -> Bool {
+  match keyword {
+    "$id"
+    | "id"
+    | "$schema"
+    | "$defs"
+    | "definitions"
+    | "$comment"
+    | "$vocabulary"
+    | "$anchor"
+    | "$dynamicAnchor"
+    | "$recursiveAnchor"
+    | "then"
+    | "else" => false
+    _ => true
+  }
+}
+
+///|
+/// A keyword's reasons, with the single reason that is the keyword's own folded
+/// into it.
+fn fold(
+  reasons : Array[OutputUnit],
+  kpath : String,
+  at : String,
+) -> (String?, Array[OutputUnit]) {
+  // The reason's place and the keyword's place have to be one place: the node
+  // keeps the keyword's own location, and a reason about a member of the
+  // instance would lose it.
+  let alone = reasons.length() == 1 &&
+    reasons[0].keyword_at == kpath &&
+    reasons[0].at == at &&
+    reasons[0].children.length() == 0
+  if alone {
+    (reasons[0].error, [])
+  } else {
+    (None, reasons)
+  }
 }
 
 ///|
