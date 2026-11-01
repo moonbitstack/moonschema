@@ -23,4 +23,5 @@ source = "src"
 
 import {
   "moonbitstack/moonregex@0.1.2",
+  "moonbitstack/moonurl@0.2.3",
 }

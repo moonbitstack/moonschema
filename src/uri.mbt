@@ -2,204 +2,42 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The two addressing schemes a schema is written in: the URI references `$id`,
-// `$ref` and `$anchor` carry (RFC 3986 §5, the reference resolution a validator
-// needs and no more), and the JSON Pointer a fragment beginning with `/` is
-// (RFC 6901). Both are here because both are addressing, and neither is JSON.
+// `$ref` and `$anchor` carry, and the JSON Pointer a fragment beginning with
+// `/` is (RFC 6901).
+//
+// URI reading and relative-reference resolution are moonurl's: the five
+// components, the merge and the dot segments are one algorithm, and a second
+// copy of it would only be subtly wrong. What is here is the pointer, which is a
+// different addressing scheme, and the two places where the two meet.
 
 ///|
 /// A reference split into the part that names a document and the part that names
 /// a place inside it. The fragment comes back without its `#`.
 fn split_fragment(reference : String) -> (String, String) {
-  let text = reference[:]
-  for i = 0; i < text.length(); i = i + 1 {
-    if text[i] == '#' {
-      return (text[0:i].to_owned(), text[i + 1:].to_owned())
-    }
+  let url = @moonurl.Url::decode(reference) catch {
+    _ => return (reference, "")
   }
-  (reference, "")
+  match url.fragment {
+    Some(fragment) => {
+      let document : @moonurl.Url = { ..url, fragment: None, }
+      (document.encode(), fragment)
+    }
+    None => (reference, "")
+  }
 }
 
 ///|
-/// `reference` resolved against `base`, RFC 3986 §5.2 in the shapes a schema
-/// uses: an absolute URI stands alone, a network reference takes the base's
-/// scheme, an absolute path takes its authority, and a relative path is merged
-/// onto the base's directory. A fragment-only reference keeps the base entirely.
+/// `reference` read against `base`, RFC 3986 §5.2.
+///
+/// A reference moonurl will not read is left as it was written: nothing can be
+/// said about where it lands, and a reference that resolves to nothing becomes a
+/// fault rather than a guess.
 fn resolve(base : String, reference : String) -> String {
-  let (target, fragment) = split_fragment(reference)
-  let (base_document, _) = split_fragment(base)
-  let merged = if target == "" {
-    base_document
-  } else if has_scheme(target) {
-    target
-  } else if target.has_prefix("//") {
-    scheme_of(base_document) + target
-  } else if target.has_prefix("/") {
-    authority_of(base_document) + target
-  } else {
-    directory_of(base_document) + target
+  let root = @moonurl.Url::decode(base) catch { _ => @moonurl.Url::new() }
+  let target = @moonurl.Url::decode(reference, base=root) catch {
+    _ => return reference
   }
-  let tidy = without_dots(merged)
-  if fragment == "" && !reference.has_suffix("#") {
-    tidy
-  } else {
-    tidy + "#" + fragment
-  }
-}
-
-///|
-/// A path with its `.` and `..` segments taken out, RFC 3986 §5.2.4.
-///
-/// `./bar.json` beside `nested/foo.json` is `nested/bar.json`, and a validator
-/// that left the dot in would look for a resource nobody named.
-fn without_dots(uri : String) -> String {
-  if !uri.contains("./") && !uri.has_suffix("/.") && !uri.has_suffix("/..") {
-    return uri
-  }
-  let authority = authority_of(uri)
-  let head = if authority == "" { scheme_of(uri) } else { authority }
-  let path = uri[head.length():].to_owned()
-  let kept : Array[String] = []
-  let rooted = path.has_prefix("/")
-  let mut trailing = false
-  for segment in split_path(path) {
-    match segment {
-      "." => trailing = true
-      ".." => {
-        if kept.length() > 0 {
-          kept.pop() |> ignore
-        }
-        trailing = true
-      }
-      _ => {
-        kept.push(segment)
-        trailing = false
-      }
-    }
-  }
-  let out = StringBuilder()
-  out.write_string(head)
-  if rooted {
-    out.write_char('/')
-  }
-  for i = 0; i < kept.length(); i = i + 1 {
-    if i > 0 {
-      out.write_char('/')
-    }
-    out.write_string(kept[i])
-  }
-  if trailing && kept.length() > 0 {
-    out.write_char('/')
-  }
-  out.to_string()
-}
-
-///|
-/// A path's segments, with the empty ones its slashes leave behind dropped
-/// except for the one a trailing slash means.
-fn split_path(path : String) -> Array[String] {
-  let text = path[:]
-  let out : Array[String] = []
-  let piece = StringBuilder()
-  let mut trailing = false
-  for i = 0; i < text.length(); i = i + 1 {
-    if text[i] == '/' {
-      let segment = piece.to_string()
-      if segment != "" {
-        out.push(segment)
-      }
-      piece.reset()
-      trailing = true
-    } else {
-      piece.write_string(text[i:i + 1].to_owned())
-      trailing = false
-    }
-  }
-  let last = piece.to_string()
-  if last != "" {
-    out.push(last)
-  } else if trailing && out.length() > 0 {
-    out.push("")
-  }
-  out
-}
-
-///|
-/// Whether a reference begins with a scheme, which is what makes it absolute.
-///
-/// A scheme is a letter followed by letters, digits, `+`, `-` or `.`, and then a
-/// colon — so a Windows path and a relative name that happens to hold a colon
-/// are not mistaken for one.
-fn has_scheme(reference : String) -> Bool {
-  let text = reference[:]
-  if text.length() == 0 || !is_alpha(text[0].to_int()) {
-    return false
-  }
-  for i = 1; i < text.length(); i = i + 1 {
-    let c = text[i]
-    if c == ':' {
-      return i > 0
-    }
-    if !(is_alpha(c.to_int()) ||
-      is_digit(c.to_int()) ||
-      c == '+' ||
-      c == '-' ||
-      c == '.') {
-      return false
-    }
-  }
-  false
-}
-
-///|
-/// `scheme:` of a URI, or the empty string when it has none.
-fn scheme_of(uri : String) -> String {
-  let text = uri[:]
-  for i = 0; i < text.length(); i = i + 1 {
-    if text[i] == ':' {
-      return text[0:i + 1].to_owned()
-    }
-  }
-  ""
-}
-
-///|
-/// Everything up to the end of the authority — `https://example.test` — or the
-/// empty string when the URI has no authority.
-fn authority_of(uri : String) -> String {
-  let text = uri[:]
-  let scheme = scheme_of(uri)
-  if scheme == "" || !text[scheme.length():].has_prefix("//") {
-    return ""
-  }
-  for i = scheme.length() + 2; i < text.length(); i = i + 1 {
-    if text[i] == '/' {
-      return text[0:i].to_owned()
-    }
-  }
-  uri
-}
-
-///|
-/// The URI with everything after its last `/` removed, which is the directory a
-/// relative reference is merged onto.
-fn directory_of(uri : String) -> String {
-  let text = uri[:]
-  for i = text.length() - 1; i >= 0; i = i - 1 {
-    if text[i] == '/' {
-      return text[0:i + 1].to_owned()
-    }
-  }
-  ""
-}
-
-///|
-fn is_alpha(code : Int32) -> Bool {
-  (code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)
-}
-
-///|
-fn is_digit(code : Int32) -> Bool {
-  code >= 0x30 && code <= 0x39
+  target.encode()
 }
 
 ///|
@@ -311,6 +149,11 @@ fn index_of(token : String) -> Int32 {
     }
   }
   value
+}
+
+///|
+fn is_digit(code : Int32) -> Bool {
+  code >= 0x30 && code <= 0x39
 }
 
 ///|

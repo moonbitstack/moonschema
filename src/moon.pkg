@@ -5,6 +5,7 @@
 // tree, which the core library reads.
 import {
   "moonbitstack/moonregex",
+  "moonbitstack/moonurl",
 }
 
 import {
