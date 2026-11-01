@@ -363,6 +363,27 @@ fn Schema::index(
             }
           _ => ()
         }
+      // Two levels of names, and a schema under the pair: a property, the value
+      // it may hold, and what the instance must be when it holds it.
+      "propertyDependencies" =>
+        match value {
+          Object(by_value) =>
+            for name, choices in by_value {
+              match choices {
+                Object(schemas) =>
+                  for held, schema in schemas {
+                    self.index(
+                      schema,
+                      here,
+                      document,
+                      step(step(step(path, keyword), name), held),
+                    )
+                  }
+                _ => ()
+              }
+            }
+          _ => ()
+        }
       _ => ()
     }
   }
@@ -471,13 +492,17 @@ fn Schema::anchor_dynamic(
 
 ///|
 /// The schema a dynamic anchor names, taken from the outermost resource in the
-/// current dynamic scope that has one by that name (2020-12 §8.2.3.2).
-fn Schema::outermost(self : Schema, anchor : String) -> Json? {
+/// current dynamic scope that has one by that name (2020-12 §8.2.3.2, v1 §8.2.3.2).
+///
+/// The resource comes back with it: an anchor's base is the resource it is in,
+/// not the one the reference was written in, and the two differ exactly when the
+/// dynamic scope is doing its job.
+fn Schema::outermost(self : Schema, anchor : String) -> (Json, String)? {
   for resource in self.scope {
     match self.dynamic.get(resource) {
       Some(anchors) =>
         match anchors.get(anchor) {
-          Some(found) => return Some(found)
+          Some(found) => return Some((found, resource))
           None => ()
         }
       None => ()

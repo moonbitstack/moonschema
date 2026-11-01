@@ -6,13 +6,28 @@
 let suite : String = "suite"
 
 ///|
-/// The five versions, each with the directory the suite keeps it in.
-let versions : Array[(String, @moonschema.Draft)] = [
-  ("draft4", Draft4),
-  ("draft6", Draft6),
-  ("draft7", Draft7),
-  ("draft2019-09", Draft2019),
-  ("draft2020-12", Draft2020),
+/// One directory of the suite, run at one version.
+///
+/// The required cases of each version are six of these; the rest are the parts
+/// the specification calls optional or leaves as a proposal, run because this
+/// library claims them.
+struct Run {
+  /// Where the directory is, relative to `tests/`.
+  directory : String
+  /// The version the cases are read at.
+  draft : @moonschema.Draft
+}
+
+///|
+/// Every directory the gate runs.
+let runs : Array[Run] = [
+  { directory: "draft4", draft: Draft4, },
+  { directory: "draft6", draft: Draft6, },
+  { directory: "draft7", draft: Draft7, },
+  { directory: "draft2019-09", draft: Draft2019, },
+  { directory: "draft2020-12", draft: Draft2020, },
+  { directory: "v1", draft: V1, },
+  { directory: "v1/proposals/propertyDependencies", draft: V1, },
 ]
 
 ///|
@@ -40,13 +55,12 @@ fn main {
   let remotes = load_remotes()
   let mut total = 0
   let mut wrong = 0
-  for version in versions {
-    let (directory, draft) = version
-    let tally = measure(directory, draft, remotes)
+  for run in runs {
+    let tally = measure(run.directory, run.draft, remotes)
     total = total + tally.passed + tally.failed
     wrong = wrong + tally.failed
     println(
-      directory.pad_start(13, ' ') +
+      run.directory.pad_start(38, ' ') +
       ": " +
       tally.passed.to_string() +
       " passed, " +

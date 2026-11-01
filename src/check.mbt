@@ -45,9 +45,7 @@ fn Schema::check(
       let mut ok = true
       // Before 2019-09 a `$ref` is the whole schema: everything beside it is
       // ignored, which is why a document from then puts nothing beside one.
-      let alone = self.draft == Draft4 ||
-        self.draft == Draft6 ||
-        self.draft == Draft7
+      let alone = !self.draft.vocabularies()
       if alone && members.get("$ref") is Some(String(reference)) {
         // Everything beside it is ignored, and a sibling `$id` is beside it: the
         // reference resolves against the base this schema was reached with.
@@ -295,6 +293,10 @@ fn Schema::check(
             self.check_dependencies(
               keyword, schema, here, value, at, kpath, faults, own,
             )
+          "propertyDependencies" =>
+            self.check_property_dependencies(
+              schema, here, value, at, kpath, faults, own,
+            )
           "allOf" =>
             match schema {
               Array(branches) => {
@@ -439,10 +441,7 @@ fn Schema::check(
           }
         }
       }
-      if ok &&
-        self.draft != Draft4 &&
-        self.draft != Draft6 &&
-        self.draft != Draft7 {
+      if ok && self.draft.vocabularies() {
         ok = self.check_unevaluated(
           members, here, value, at, spath, faults, own,
         )
@@ -503,29 +502,37 @@ fn Schema::refer_dynamic(
   marks : Marks,
 ) -> Bool {
   let name = if reference == "#" { "" } else { split_fragment(reference).1 }
-  // It resolves like a plain reference first. Only when what it lands on is
-  // itself a dynamic anchor of that name does the dynamic scope take over — and
-  // then it is the outermost resource in scope that answers, not the nearest.
-  let landed = self.follow(base, reference)
-  let dynamic = match landed {
-    Some((Object(members), _)) =>
-      if name == "" {
-        members.get("$recursiveAnchor") is Some(True)
-      } else {
-        match members.get("$dynamicAnchor") {
-          Some(String(found)) => found == name
-          _ => false
-        }
-      }
-    _ => false
-  }
-  let target = if dynamic {
-    match self.outermost(name) {
-      Some(found) => Some((found, base))
-      None => landed
-    }
+  let target = if self.draft == V1 {
+    // v1 dropped the bookending requirement: the name alone picks the target,
+    // from the outermost resource in scope that carries a `$dynamicAnchor` by
+    // it, and there is no falling back on a plain reference.
+    self.outermost(name)
   } else {
-    landed
+    // Before v1 it resolves like a plain reference first. Only when what it
+    // lands on is itself a dynamic anchor of that name does the dynamic scope
+    // take over — and then it is the outermost resource in scope that answers,
+    // not the nearest.
+    let landed = self.follow(base, reference)
+    let dynamic = match landed {
+      Some((Object(members), _)) =>
+        if name == "" {
+          members.get("$recursiveAnchor") is Some(True)
+        } else {
+          match members.get("$dynamicAnchor") {
+            Some(String(found)) => found == name
+            _ => false
+          }
+        }
+      _ => false
+    }
+    if dynamic {
+      match self.outermost(name) {
+        Some(found) => Some(found)
+        None => landed
+      }
+    } else {
+      landed
+    }
   }
   match target {
     Some((found, outside)) => {

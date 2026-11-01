@@ -107,7 +107,7 @@ fn Schema::check_items(
   marks : Marks,
 ) -> Bool {
   guard value is Array(items) else { return true }
-  let modern = self.draft == Draft2020
+  let modern = self.draft.prefix_items()
   match keyword {
     "prefixItems" =>
       if modern && schema is Array(schemas) {
@@ -250,7 +250,7 @@ fn Schema::check_contains(
 ) -> Bool {
   // `contains` arrived in draft-06.
   guard self.draft != Draft4 && value is Array(items) else { return true }
-  let counted = self.draft == Draft2019 || self.draft == Draft2020
+  let counted = self.draft.vocabularies()
   let least = match (counted, members.get("minContains")) {
     (true, Some(Number(n, ..))) => n.to_int()
     _ => 1
@@ -414,7 +414,7 @@ fn Schema::check_dependencies(
   }
   // `dependencies` was split in 2019-09; reading one at the other's version
   // would apply a keyword that version does not have.
-  let split = self.draft == Draft2019 || self.draft == Draft2020
+  let split = self.draft.vocabularies()
   if (keyword == "dependencies" && split) ||
     (keyword != "dependencies" && !split) {
     return true
@@ -465,6 +465,61 @@ fn Schema::check_dependencies(
       if faults is None {
         break
       }
+    }
+  }
+  every
+}
+
+///|
+/// `propertyDependencies`, which v1 added: one property's *value* picks the
+/// subschema the whole instance is then validated against.
+///
+/// `dependentSchemas` asks whether a property is there; this asks what it says,
+/// which is the common case of choosing between alternatives without writing the
+/// `if`/`then` by hand.
+fn Schema::check_property_dependencies(
+  self : Schema,
+  schema : Json,
+  base : String,
+  value : Json,
+  at : String,
+  spath : String,
+  faults : Array[Fault]?,
+  marks : Marks,
+) -> Bool {
+  if self.draft != V1 {
+    return true
+  }
+  guard schema is Object(dependencies) else { return true }
+  guard value is Object(instance) else { return true }
+  let mut every = true
+  for name, by_value in dependencies {
+    guard by_value is Object(choices) else { continue }
+    match instance.get(name) {
+      Some(String(held)) =>
+        match choices.get(held) {
+          Some(subschema) => {
+            let inner = Marks::new()
+            if self.check(
+                subschema,
+                base,
+                value,
+                at,
+                step(step(spath, name), held),
+                faults,
+                inner,
+              ) {
+              marks.take(inner)
+            } else {
+              every = false
+              if faults is None {
+                break
+              }
+            }
+          }
+          None => ()
+        }
+      _ => ()
     }
   }
   every

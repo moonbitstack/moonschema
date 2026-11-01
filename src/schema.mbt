@@ -4,10 +4,10 @@
 ///|
 /// Which version of JSON Schema a document is written against.
 ///
-/// The five released versions that are still in use. `draft-03` is not here: it
+/// The six released versions that are in use. `draft-03` is not here: it
 /// predates the `$` keywords and nothing has been written against it since 2010.
-/// The next release is not here yet either; it arrives as another value of this
-/// enum and a keyword table, not as a second validator.
+/// The next release arrives as another value of this enum and a keyword table,
+/// not as a second validator.
 pub(all) enum Draft {
   /// draft-04 (2013). What OpenAPI 3.0 profiles, and what a great deal of Java
   /// and Python tooling still emits.
@@ -21,6 +21,9 @@ pub(all) enum Draft {
   Draft2019
   /// 2020-12. `$dynamicRef`, `prefixItems`, and what OpenAPI 3.1 is.
   Draft2020
+  /// v1 (2026). `format` asserts by default and `propertyDependencies` joins the
+  /// applicators; the rest of the language is 2020-12's.
+  V1
 } derive(Eq, Debug)
 
 ///|
@@ -40,6 +43,7 @@ pub impl Show for Draft with fn output(self, logger) {
       Draft7 => "draft-07"
       Draft2019 => "2019-09"
       Draft2020 => "2020-12"
+      V1 => "v1"
     },
   )
 }
@@ -64,6 +68,7 @@ pub fn Draft::uri(self : Draft) -> String {
     Draft7 => "http://json-schema.org/draft-07/schema#"
     Draft2019 => "https://json-schema.org/draft/2019-09/schema"
     Draft2020 => "https://json-schema.org/draft/2020-12/schema"
+    V1 => "https://json-schema.org/v1"
   }
 }
 
@@ -93,6 +98,9 @@ pub fn Draft::of(uri : StringView) -> Draft? {
     "json-schema.org/draft-07/schema" => Some(Draft7)
     "json-schema.org/draft/2019-09/schema" => Some(Draft2019)
     "json-schema.org/draft/2020-12/schema" => Some(Draft2020)
+    // The release IRI is `…/v1/<year>`, and the version alone names the latest
+    // release within it, which is what a document written against either means.
+    "json-schema.org/v1" | "json-schema.org/v1/2026" => Some(V1)
     _ => None
   }
 }
@@ -137,6 +145,29 @@ pub impl Show for Output with fn output(self, logger) {
 
 ///|
 pub extend Output with Show::{output, to_string}
+
+///|
+/// Whether this version has vocabularies: 2019-09 and everything after it.
+///
+/// One question asked five times in the validator — does a `$ref` replace its
+/// siblings, does `unevaluated*` apply, is `dependencies` split — and asked here
+/// once so that a release added later cannot be forgotten in one of the five.
+fn Draft::vocabularies(self : Draft) -> Bool {
+  match self {
+    Draft4 | Draft6 | Draft7 => false
+    Draft2019 | Draft2020 | V1 => true
+  }
+}
+
+///|
+/// Whether this version spells the tuple form of `items` as `prefixItems`, which
+/// 2020-12 introduced and v1 kept.
+fn Draft::prefix_items(self : Draft) -> Bool {
+  match self {
+    Draft4 | Draft6 | Draft7 | Draft2019 => false
+    Draft2020 | V1 => true
+  }
+}
 
 ///|
 /// The output format a validation produces unless asked for another.

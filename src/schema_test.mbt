@@ -74,3 +74,24 @@ test "a version and an output format print as the specification names them" {
   assert_eq(@moonschema.Output::Detailed.to_string(), "detailed")
   assert_eq(@moonschema.Output::Verbose.to_string(), "verbose")
 }
+
+///|
+/// v1 has two IRIs: the release, `…/v1/2026`, and the version alone, which names
+/// the latest release within it. A document written against either is a v1
+/// document.
+test "v1 answers to the release IRI and to the version" {
+  assert_eq(@moonschema.Draft::V1.uri(), "https://json-schema.org/v1")
+  assert_eq(
+    @moonschema.Draft::of(@moonschema.Draft::V1.uri()[:]),
+    Some(@moonschema.Draft::V1),
+  )
+  assert_eq(
+    @moonschema.Draft::of("https://json-schema.org/v1/2026"[:]),
+    Some(@moonschema.Draft::V1),
+  )
+  assert_eq(@moonschema.Draft::of("https://json-schema.org/v1/"[:]), None)
+  assert_eq(@moonschema.Draft::V1.to_string(), "v1")
+  // The preset does not move when a release is added: a document that names
+  // nothing is still read at 2020-12, which is what it was written against.
+  assert_eq(@moonschema.draft, @moonschema.Draft::Draft2020)
+}
