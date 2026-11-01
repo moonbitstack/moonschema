@@ -103,7 +103,7 @@ pub struct Schema {
   // private fields
 }
 pub fn Schema::faults(Self, Json) -> Array[Fault]
-pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json], format? : Bool) -> Self raise Refused
+pub fn Schema::new(Json, draft? : Draft, remotes? : Map[String, Json], format? : Bool, registry? : Registry) -> Self raise Refused
 pub fn Schema::report(Self, Json, output? : Output) -> Report
 pub fn Schema::valid(Self, Json) -> Bool
 
@@ -116,7 +116,8 @@ pub fn Site::not_equal(Self, Self) -> Bool
 pub fn Site::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Verdict {
-  Accept(annotation~ : Json?)
+  Accept
+  Annotate(annotation~ : Json)
   Refuse(why~ : String)
 } derive(Eq, @debug.Debug)
 pub fn Verdict::equal(Self, Self) -> Bool

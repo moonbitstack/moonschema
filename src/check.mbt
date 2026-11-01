@@ -75,6 +75,9 @@ fn Schema::check(
         } else {
           Some(reasons)
         }
+        // A keyword from a vocabulary outside this library answers with what it
+        // contributes, if anything, and the node carries that.
+        let mut given : Json? = None
         let passed = match keyword {
           "$ref" =>
             match schema {
@@ -440,7 +443,26 @@ fn Schema::check(
           }
           // `then` and `else` are applied by `if` and never on their own.
           "then" | "else" => true
-          _ => true
+          _ =>
+            match self.extra.get(keyword) {
+              Some((judged, asserts)) =>
+                // An optional vocabulary — one the metaschema names with `false`
+                // — annotates and asserts nothing, whatever its keyword says.
+                if !asserts {
+                  given = Some(schema)
+                  true
+                } else {
+                  match judged.judge(schema, value, { at, schema_at: kpath, }) {
+                    Accept => true
+                    Annotate(annotation~) => {
+                      given = Some(annotation)
+                      true
+                    }
+                    Refuse(why~) => note(inner, at, kpath, keyword, why)
+                  }
+                }
+              None => true
+            }
         }
         match sink {
           Some(list) =>
@@ -450,7 +472,10 @@ fn Schema::check(
               absolute_at: None,
               at,
               error: None,
-              annotation: annotation_of(keyword, schema),
+              annotation: match annotation_of(keyword, schema) {
+                Some(found) => Some(found)
+                None => given
+              },
               children: reasons,
             })
           None => ()

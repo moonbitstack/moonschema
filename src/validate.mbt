@@ -113,6 +113,9 @@ pub struct Schema {
   /// resolves against this and not against where it was written, which is the
   /// whole of what makes it dynamic.
   priv scope : Array[String]
+  /// The keywords a dialect outside this library brings, by name, and whether
+  /// each asserts or only annotates — which is what `$vocabulary` decides.
+  priv extra : Map[String, (&Keyword, Bool)]
 }
 
 ///|
@@ -121,6 +124,11 @@ pub struct Schema {
 /// `draft` is the version to read it at when it does not name one; a `$schema`
 /// it does name wins. `remotes` are the documents a `$ref` may reach, each under
 /// the URI it is referred to by.
+///
+/// `registry` holds the vocabularies a document may ask for beyond the built-in
+/// ones: a `$vocabulary` naming one of them puts its keywords in force, naming
+/// one nobody holds with `true` refuses the document, and naming it with `false`
+/// leaves its keywords as annotations.
 ///
 /// `format` decides whether `format` asserts. Left out, the document answers for
 /// itself: an annotation before v1 unless its dialect's metaschema declares the
@@ -139,6 +147,7 @@ pub fn Schema::new(
   draft~ : Draft = draft,
   remotes~ : Map[String, Json] = Map::Map([]),
   format? : Bool,
+  registry~ : Registry = registry,
 ) -> Schema raise Refused {
   let mut version = draft
   // Every keyword this validates with is in the validation vocabulary. A
@@ -147,18 +156,38 @@ pub fn Schema::new(
   // anyway would refuse instances the schema's own author allows.
   let mut asserts = true
   let mut asserts_format = draft.asserts_format()
+  let declared : Map[String, Bool] = Map::Map([])
   match document {
     Object(members) =>
       match members.get("$schema") {
         Some(String(uri)) => {
-          let (named, validating, formatting) = read_version(uri, remotes)
-          version = named
-          asserts = validating
-          asserts_format = formatting
+          let dialect = Dialect::of(uri, remotes)
+          version = dialect.draft
+          asserts = dialect.asserts
+          asserts_format = dialect.asserts_format
+          for vocabulary, wanted in dialect.declared {
+            declared[vocabulary] = wanted
+          }
         }
         _ => ()
       }
     _ => ()
+  }
+  // The keywords the caller's registry holds, for the vocabularies this document
+  // asks for. A required vocabulary nobody holds is a document that cannot be
+  // read as it says it is written.
+  let extra : Map[String, (&Keyword, Bool)] = Map::Map([])
+  for vocabulary, wanted in declared {
+    match registry.get(vocabulary) {
+      Some(held) =>
+        for keyword in held.keywords() {
+          extra[keyword.name()] = (keyword, wanted)
+        }
+      None =>
+        if wanted && !ours(vocabulary) {
+          raise Broken(at="", why="no such vocabulary: " + vocabulary)
+        }
+    }
   }
   let base = match document {
     Object(members) =>
@@ -185,6 +214,7 @@ pub fn Schema::new(
     dynamic: Map::Map([]),
     patterns: Map::Map([]),
     scope: [],
+    extra,
   }
   schema.index(document, base, base, "")
   for uri, remote in remotes {
@@ -588,28 +618,44 @@ fn Schema::outermost(self : Schema, anchor : String) -> (Json, String)? {
 }
 
 ///|
-/// What a metaschema says about the document read against it: the version, and
-/// which of the two vocabularies that change behaviour it declares.
-///
+/// What a metaschema says about the document read against it: the version, which
+/// of the two vocabularies that change behaviour it declares, and everything it
+/// declares, for the vocabularies this library does not own.
+priv struct Dialect {
+  draft : Draft
+  /// Whether the validation vocabulary is in force.
+  asserts : Bool
+  /// Whether the format-assertion vocabulary is.
+  asserts_format : Bool
+  /// The `$vocabulary` as written: URI to whether it is required.
+  declared : Map[String, Bool]
+}
+
+///|
 /// A URI this does not know is looked for among the documents the caller fed:
 /// a custom metaschema is a document like any other, and what it says about
 /// itself — the version it is written against, the vocabularies it declares —
 /// is read from it. A URI that is neither known nor fed is refused, because a
 /// document written against something nobody can read is not one to guess at.
-fn read_version(
+fn Dialect::of(
   uri : String,
   remotes : Map[String, Json],
-) -> (Draft, Bool, Bool) raise Refused {
+) -> Dialect raise Refused {
   match Draft::of(uri[:]) {
-    Some(named) => (named, true, named.asserts_format())
+    // A version this knows is its own dialect: nothing outside is in force
+    // unless the caller's registry is asked for by a metaschema.
+    Some(named) =>
+      {
+        draft: named,
+        asserts: true,
+        asserts_format: named.asserts_format(),
+        declared: Map::Map([]),
+      }
     None =>
       match remotes.get(split_fragment(uri).0) {
         Some(Object(meta)) => {
-          let (version, asserting) = match meta.get("$schema") {
-            Some(String(parent)) => {
-              let (named, _, asserting) = read_version(parent, remotes)
-              (named, asserting)
-            }
+          let parent = match meta.get("$schema") {
+            Some(String(found)) => Dialect::of(found, remotes)
             _ => raise Unknown(uri)
           }
           let mut asserts = true
@@ -617,12 +663,14 @@ fn read_version(
           // whether the entry beside it is `true` or `false`: the boolean is
           // advice for readers that do not know the vocabulary, and this one
           // does.
-          let mut format = asserting
+          let mut format = parent.asserts_format
+          let declared : Map[String, Bool] = Map::Map([])
           match meta.get("$vocabulary") {
-            Some(Object(declared)) => {
+            Some(Object(written)) => {
               asserts = false
               format = false
-              for vocabulary, wanted in declared {
+              for vocabulary, wanted in written {
+                declared[vocabulary] = wanted is True
                 if vocabulary.has_suffix("/vocab/validation") && wanted is True {
                   asserts = true
                 }
@@ -633,7 +681,7 @@ fn read_version(
             }
             _ => ()
           }
-          (version, asserts, format)
+          { draft: parent.draft, asserts, asserts_format: format, declared, }
         }
         _ => raise Unknown(uri)
       }

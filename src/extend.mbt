@@ -37,9 +37,11 @@ pub extend Site with Debug::{to_repr}
 ///|
 /// What a keyword says about one instance.
 pub(all) enum Verdict {
-  /// It conforms. `annotation` is what the keyword contributes to the output
-  /// when the caller asks for annotations; `None` when it contributes nothing.
-  Accept(annotation~ : Json?)
+  /// It conforms, and has nothing to add.
+  Accept
+  /// It conforms, and contributes `annotation` to the output — which is what a
+  /// keyword that annotates rather than asserts always answers.
+  Annotate(annotation~ : Json)
   /// It does not conform, and this says why in one clause.
   Refuse(why~ : String)
 } derive(Eq, Debug)
@@ -70,7 +72,7 @@ pub extend Verdict with Debug::{to_repr}
 ///   match (value, instance) {
 ///     (True, Number(number, ..)) =>
 ///       if number % 2.0 == 0.0 {
-///         Accept()
+///         Accept
 ///       } else {
 ///         Refuse("odd")
 ///       }
@@ -115,6 +117,23 @@ pub struct Registry {
   /// Every name taken so far, by the URI of the vocabulary that took it. A
   /// built-in keyword's name is in here from the start, held by the empty URI.
   priv names : Map[String, String]
+}
+
+///|
+/// Whether a vocabulary is one this library implements, which is every
+/// vocabulary 2019-09 and 2020-12 define. A document that declares one of them
+/// is declaring something already in force, and nothing has to hold it.
+fn ours(vocabulary : String) -> Bool {
+  vocabulary.has_prefix("https://json-schema.org/draft/2019-09/vocab/") ||
+  vocabulary.has_prefix("https://json-schema.org/draft/2020-12/vocab/") ||
+  vocabulary.has_prefix("http://json-schema.org/draft/2019-09/vocab/") ||
+  vocabulary.has_prefix("http://json-schema.org/draft/2020-12/vocab/")
+}
+
+///|
+/// The vocabulary held under `uri`, or `None`.
+fn Registry::get(self : Registry, uri : String) -> &Vocabulary? {
+  self.held.get(uri)
 }
 
 ///|
