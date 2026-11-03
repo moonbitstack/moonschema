@@ -1,6 +1,6 @@
 name = "moonbitstack/moonschema"
 
-version = "0.2.3"
+version = "0.2.4"
 
 readme = "README.md"
 
@@ -10,10 +10,19 @@ license = "Apache-2.0"
 
 keywords = [
   "json-schema",
+  "jsonschema",
   "schema",
   "validation",
+  "validator",
+  "draft-04",
+  "draft-06",
+  "draft-07",
+  "draft-2019-09",
+  "draft-2020-12",
   "openapi",
   "json",
+  "format",
+  "vocabulary",
   "moonbit",
 ]
 
