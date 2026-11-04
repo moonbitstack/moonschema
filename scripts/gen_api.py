@@ -62,6 +62,8 @@ def docs_of(folder):
                 rest = stripped[3:]
                 pending.append(rest[1:] if rest.startswith(" ") else rest)
                 continue
+            if stripped.startswith("#"):
+                continue
             match = DECL.match(line)
             if match:
                 if pending:
