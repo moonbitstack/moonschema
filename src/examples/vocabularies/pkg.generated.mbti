@@ -2,6 +2,7 @@
 package "moonbitstack/moonschema/examples/vocabularies"
 
 import {
+  "moonbitlang/core/json",
   "moonbitstack/moonschema",
 }
 
@@ -16,7 +17,7 @@ pub fn Measures::uri(Self) -> String
 pub impl @moonschema.Vocabulary for Measures
 
 type Units
-pub fn Units::judge(Self, Json, Json, @moonschema.Site) -> @moonschema.Verdict
+pub fn Units::judge(Self, @json.Json, @json.Json, @moonschema.Site) -> @moonschema.Verdict
 pub fn Units::name(Self) -> String
 pub impl @moonschema.Keyword for Units
 

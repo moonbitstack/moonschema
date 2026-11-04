@@ -8,6 +8,7 @@
 /// predates the `$` keywords and nothing has been written against it since 2010.
 /// The next release arrives as another value of this enum and a keyword table,
 /// not as a second validator.
+#derive(Eq, Debug)
 pub(all) enum Draft {
   /// draft-04 (2013). What OpenAPI 3.0 profiles, and what a great deal of Java
   /// and Python tooling still emits.
@@ -24,7 +25,7 @@ pub(all) enum Draft {
   /// v1 (2026). `format` asserts by default and `propertyDependencies` joins the
   /// applicators; the rest of the language is 2020-12's.
   V1
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Draft with Eq::{equal, not_equal}
@@ -110,6 +111,7 @@ pub fn Draft::of(uri : StringView) -> Draft? {
 ///
 /// The four formats the specification itself defines (2020-12 §12.4), named as
 /// it names them.
+#derive(Eq, Debug)
 pub(all) enum Output {
   /// Whether it validated, and nothing else. The cheapest, and what a guard on
   /// a request wants.
@@ -122,7 +124,7 @@ pub(all) enum Output {
   /// Every annotation as well as every error, which is what a tool that explains
   /// a schema to a person needs.
   Verbose
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Output with Eq::{equal, not_equal}

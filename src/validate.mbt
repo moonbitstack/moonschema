@@ -14,13 +14,14 @@
 ///
 /// These are faults in the schema, not in the instance an instance that fails
 /// validation produces [`Fault`]s instead.
+#derive(Eq, Debug)
 pub(all) suberror Refused {
   /// A `$schema` naming a version this does not know.
   Unknown(String)
   /// A reference that resolves to nothing, or a keyword whose value is not the
   /// shape the specification gives it.
   Broken(at~ : String, why~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Refused with Eq::{equal, not_equal}
@@ -44,6 +45,7 @@ pub extend Refused with Show::{output, to_string}
 ///|
 /// One reason an instance failed, in the shape the basic output gives it
 /// (2020-12 §12.4.2).
+#derive(Eq, Debug)
 pub(all) struct Fault {
   /// Where in the instance, as a JSON Pointer.
   at : String
@@ -53,7 +55,7 @@ pub(all) struct Fault {
   keyword : String
   /// What that keyword had to say.
   message : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Fault with Eq::{equal, not_equal}

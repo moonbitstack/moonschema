@@ -21,12 +21,13 @@
 ///|
 /// Where a keyword sits, for the benefit of a keyword that has to say where it
 /// looked.
+#derive(Eq, Debug)
 pub(all) struct Site {
   /// Where in the instance, as a JSON Pointer; empty for the instance itself.
   at : String
   /// Where in the schema, as a JSON Pointer, following the walk that arrived.
   schema_at : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Site with Eq::{equal, not_equal}
@@ -36,6 +37,7 @@ pub extend Site with Debug::{to_repr}
 
 ///|
 /// What a keyword says about one instance.
+#derive(Eq, Debug)
 pub(all) enum Verdict {
   /// It conforms, and has nothing to add.
   Accept
@@ -44,7 +46,7 @@ pub(all) enum Verdict {
   Annotate(annotation~ : Json)
   /// It does not conform, and this says why in one clause.
   Refuse(why~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Verdict with Eq::{equal, not_equal}

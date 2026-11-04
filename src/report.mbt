@@ -17,6 +17,7 @@
 /// resource's own URI and a pointer into it and never goes through one. The two
 /// differ exactly when a reference was crossed, and a reader that has to fetch
 /// the keyword needs the second.
+#derive(Eq, Debug)
 pub(all) struct OutputUnit {
   /// Whether this result is a pass.
   valid : Bool
@@ -33,7 +34,7 @@ pub(all) struct OutputUnit {
   annotation : Json?
   /// The results this one encloses.
   children : Array[OutputUnit]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend OutputUnit with Eq::{equal, not_equal}
@@ -47,12 +48,13 @@ pub extend OutputUnit with Debug::{to_repr}
 /// `units` is the whole of it: empty for `flag`, flat for `basic`, a pruned tree
 /// for `detailed`, and the tree the walk produced for `verbose`. [`Report::to_json`]
 /// writes it as §12.4's object, which is what a caller sends over a wire.
+#derive(Eq, Debug)
 pub(all) struct Report {
   /// Whether the instance conformed.
   valid : Bool
   /// The results, nested as the format asks.
   units : Array[OutputUnit]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Report with Eq::{equal, not_equal}
