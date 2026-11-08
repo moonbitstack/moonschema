@@ -31,7 +31,7 @@ description = "JSON Schema validation for MoonBit, draft-04 through v1: four out
 source = "src"
 
 import {
-  "moonbitstack/moondate@0.1.0",
-  "moonbitstack/moonregex@0.1.2",
-  "moonbitstack/moonurl@0.2.3",
+  "moonbitstack/moondate@0.1.5",
+  "moonbitstack/moonregex@0.1.3",
+  "moonbitstack/moonurl@0.2.5",
 }
