@@ -425,7 +425,9 @@ fn Schema::check_dependencies(
         let mut all = true
         for needed in names {
           if needed is String(text) && instance.get(text) is None {
-            all = note(sink, at, step(spath, name), keyword, "missing " + text)
+            // The keyword is `dependentRequired`; the property that pulled it in
+            // is what the message says, not a step of the schema's own path.
+            all = note(sink, at, spath, keyword, "missing " + text)
           }
         }
         all
