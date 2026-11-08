@@ -62,27 +62,71 @@ pub extend Verdict with Debug::{to_repr}
 /// annotates, or both; it does not apply subschemas — a keyword that has to walk
 /// a subschema is an applicator, and applicators are this library's own.
 ///
-/// ```moonbit nocheck
-/// struct Even {}
+/// ```mbt nocheck
+/// struct Parity {}
 ///
-/// pub impl Keyword for Even with fn name(_self) {
-///   "x-even"
+/// pub impl @moonschema.Keyword for Parity with fn name(_self) {
+///   "x-parity"
 /// }
 ///
-/// pub impl Keyword for Even with fn judge(_self, value, instance, site) {
+/// pub impl @moonschema.Keyword for Parity with fn judge(
+///   _self,
+///   value,
+///   instance,
+///   site,
+/// ) {
 ///   ignore(site)
 ///   match (value, instance) {
 ///     (True, Number(number, ..)) =>
-///       if number % 2.0 == 0.0 {
+///       if number == (number / 2.0).floor() * 2.0 {
 ///         Accept
 ///       } else {
-///         Refuse("odd")
+///         Refuse(why="odd")
 ///       }
-///     _ => Accept()
+///     _ => Accept
 ///   }
 /// }
 ///
-/// pub extend Even with Keyword::{name, judge}
+/// pub extend Parity with @moonschema.Keyword::{name, judge}
+///
+/// struct ParityVocabulary {}
+///
+/// pub impl @moonschema.Vocabulary for ParityVocabulary with fn uri(_self) {
+///   "https://example.test/vocab/parity"
+/// }
+///
+/// pub impl @moonschema.Vocabulary for ParityVocabulary with fn keywords(_self) {
+///   let parity : &@moonschema.Keyword = Parity::{ }
+///   [parity]
+/// }
+///
+/// pub extend ParityVocabulary with @moonschema.Vocabulary::{uri, keywords}
+///
+/// test {
+///   let metaschema = @json.parse(
+///     (
+///       #|{ "$id": "https://example.test/meta",
+///       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
+///       #|  "$vocabulary": {
+///       #|    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+///       #|    "https://example.test/vocab/parity": true } }
+///     ),
+///   )
+///   let registry = @moonschema.Registry::new()
+///   registry.add(ParityVocabulary::{ })
+///   let schema = @moonschema.Schema::new(
+///     @json.parse(
+///       (
+///         #|{ "$schema": "https://example.test/meta",
+///         #|  "type": "integer", "x-parity": true }
+///       ),
+///     ),
+///     remotes={ "https://example.test/meta": metaschema },
+///     registry~,
+///   )
+///   assert_eq(schema.valid(@json.parse("4")), true)
+///   assert_eq(schema.faults(@json.parse("5"))[0].message, "odd")
+/// }
 /// ```
 pub(open) trait Keyword {
   /// The name it is written as in a schema.

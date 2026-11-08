@@ -138,11 +138,14 @@ pub struct Schema {
 /// answer, because a call is more specific than a document's dialect, which is
 /// more specific than a version's default.
 ///
-/// ```moonbit nocheck
-/// let schema = @moonschema.Schema::new(
-///   @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
-/// )
-/// schema.valid(@json.parse("{\"id\": 1}"))   // true
+/// ```moonbit check
+/// test {
+///   let schema = @moonschema.Schema::new(
+///     @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+///   )
+///   assert_eq(schema.valid(@json.parse("{\"id\": 1}")), true)
+///   assert_eq(schema.valid(@json.parse("{}")), false)
+/// }
 /// ```
 pub fn Schema::new(
   document : Json,
@@ -234,10 +237,12 @@ pub fn Schema::new(
 /// This is the flag output (§12.4.1): the cheapest answer, and the one a guard on
 /// a request wants. [`Schema::faults`] says why not.
 ///
-/// ```moonbit nocheck
-/// let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
-/// schema.valid(@json.parse("7"))          // true
-/// schema.valid(@json.parse("\"seven\""))   // false
+/// ```moonbit check
+/// test {
+///   let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+///   assert_eq(schema.valid(@json.parse("7")), true)
+///   assert_eq(schema.valid(@json.parse("\"seven\"")), false)
+/// }
 /// ```
 pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
   self.scope.clear()
@@ -253,14 +258,18 @@ pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
 /// [`Schema::report`] is the other reading of the same walk, in the four formats
 /// §12 names.
 ///
-/// ```moonbit nocheck
-/// let schema = @moonschema.Schema::new(
-///   @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
-/// )
-/// for fault in schema.faults(@json.parse("0")) {
-///   println(fault.to_string())
+/// ```moonbit check
+/// test {
+///   let schema = @moonschema.Schema::new(
+///     @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+///   )
+///   let faults = schema.faults(@json.parse("0"))
+///   assert_eq(faults.length(), 1)
+///   assert_eq(faults[0].at, "")
+///   assert_eq(faults[0].keyword, "minimum")
+///   assert_eq(faults[0].schema_at, "/minimum")
+///   assert_eq(faults[0].message, "below the minimum")
 /// }
-/// // the instance: below the minimum (minimum at /minimum)
 /// ```
 pub fn Schema::faults(self : Schema, instance : Json) -> Array[Fault] {
   let collected : Array[OutputUnit] = []
