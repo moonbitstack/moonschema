@@ -373,7 +373,7 @@ for fault in headers.faults(
       <pre class="out" data-lang="text">/id: not of type string (type at /properties/id/type)
 /x-trace: not of type string (type at /patternProperties/^x-/type)
 /n: not of type integer (type at /additionalProperties/type)
-the instance: missing rev (dependentRequired at /dependentRequired/id)</pre>
+the instance: missing rev (dependentRequired at /dependentRequired)</pre>
 
       <p>
         <code>propertyNames</code> applies a schema to the names rather than to the values, and
@@ -454,7 +454,7 @@ println(word.valid(Json::string("<span class='w2'>中</span>")))  // false — o
 println(word.valid(Json::string("a")))   // false — one as well
 println(word.valid(Json::string("<span class='w2'>🇨🇳</span>")))  // true — a flag is two</pre>
       <pre class="out" data-lang="text">false
-true
+false
 true</pre>
 
       <p>
@@ -656,13 +656,14 @@ for fault in closed.faults(
 ) {
   println(fault.to_string())
 }</pre>
-      <pre class="out" data-lang="text">/email: no instance validates against false (schema at /unevaluatedProperties)</pre>
+      <pre class="out" data-lang="text">/email: no instance validates against false (unevaluatedProperties at /unevaluatedProperties)</pre>
 
       <p>
-        The keyword is <code>schema</code> there because the schema in question is the boolean
-        <code>false</code>, and <code>false</code> refuses everything. A branch that fails
-        contributes nothing, so the properties it would have covered stay unevaluated — which is
-        what the specification asks for and what a naive implementation gets wrong.
+        The reason is the boolean <code>false</code> the keyword applies, and <code>false</code>
+        refuses everything; the fault names <code>unevaluatedProperties</code>, because that is the
+        keyword that asked. A branch that fails contributes nothing, so the properties it would
+        have covered stay unevaluated — which is what the specification asks for and what a naive
+        implementation gets wrong.
       </p>
     </section>
 
@@ -757,6 +758,14 @@ true</pre>
       <pre data-lang="moonbit">/// `x-units`: a number is a whole number of units, and the keyword says how many
 /// decimal places a unit has — so `2` admits `1.25` and refuses `1.234`.
 struct Units {}
+
+fn scale_of(places : Double) -> Double {
+  let mut scale = 1.0
+  for _ in 0..<places.to_int() {
+    scale = scale * 10.0
+  }
+  scale
+}
 
 pub impl @moonschema.Keyword for Units with fn name(_self) { "x-units" }
 
@@ -913,8 +922,9 @@ false</pre>
       </p>
       <p>
         The four output forms of the specification have names here — <code>Flag</code>,
-        <code>Basic</code>, <code>Detailed</code>, <code>Verbose</code> — and two of them are
-        produced: <code>valid</code> is the flag, <code>faults</code> the basic, flattened. The
+        <code>Basic</code>, <code>Detailed</code>, <code>Verbose</code> — and <code>report</code>
+        produces all four from one walk. <code>valid</code> is the flag by a shorter route, and
+        <code>faults</code> is the basic format flattened to the reasons. The
         preset <code>@moonschema.output</code> is <code>Flag</code>, because the common case is a
         guard that wants a yes or a no.
       </p>
