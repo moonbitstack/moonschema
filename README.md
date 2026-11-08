@@ -31,16 +31,14 @@ fn main raise {
       ),
     ),
   )
-  println(schema.valid(@json.parse("{\"port\": 8080}")))
-  for fault in schema.faults(@json.parse("{\"port\": 0}")) {
-    println(fault.to_string())
-  }
+  assert_eq(schema.valid(@json.parse("{\"port\": 8080}")), true)
+  let faults = schema.faults(@json.parse("{\"port\": 0}"))
+  assert_eq(faults.length(), 1)
+  assert_eq(
+    faults[0].to_string(),
+    "/port: below the minimum (minimum at /properties/port/minimum)",
+  )
 }
-```
-
-```
-true
-/port: below the minimum (minimum at /properties/port/minimum)
 ```
 
 ## What it answers
@@ -85,25 +83,23 @@ with more or less of itself. `Report::to_json` writes the object §12.4 describe
 <tr><td><code>Verbose</code></td><td>the whole tree, annotations and passes included</td></tr>
 </table>
 
-<!-- nocheck -->
 ```moonbit
 let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
 let report = schema.report(@json.parse("\"seven\""), output=@moonschema.Output::Basic)
-println(report.to_json().stringify(indent=2))
-```
-
-```
-{
-  "valid": false,
-  "errors": [
-    {
-      "valid": false,
-      "keywordLocation": "/type",
-      "instanceLocation": "",
-      "error": "not of type integer"
-    }
-  ]
-}
+assert_eq(
+  report.to_json().stringify(indent=2),
+  #|{
+  #|  "valid": false,
+  #|  "errors": [
+  #|    {
+  #|      "valid": false,
+  #|      "keywordLocation": "/type",
+  #|      "instanceLocation": "",
+  #|      "error": "not of type integer"
+  #|    }
+  #|  ]
+  #|},
+)
 ```
 
 An output unit carries two pointers that are one pointer until a reference is crossed:
@@ -117,13 +113,13 @@ it — and does not.
 dozen more, each read against the RFC that defines it. Before v1 the specification makes the
 keyword an annotation, so it says nothing about validity unless you ask:
 
-<!-- nocheck -->
 ```moonbit
 let schema = @moonschema.Schema::new(
   @json.parse("{ \"format\": \"ipv4\" }"),
   format=true,
 )
-println(schema.valid(@json.parse("\"not-an-ipv4\"")))   // false
+assert_eq(schema.valid(@json.parse("\"not-an-ipv4\"")), false)
+assert_eq(schema.valid(@json.parse("\"10.0.0.1\"")), true)
 ```
 
 The argument is optional, and leaving it out lets the document answer: an annotation unless its
@@ -175,7 +171,6 @@ fetched: a validator that opens sockets is a validator that blocks, retries and 
 handed over does not resolve, and a reference that lands nowhere is a fault rather than a silent
 pass.
 
-<!-- nocheck -->
 ```moonbit
 let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
 let schema = @moonschema.Schema::new(
@@ -184,7 +179,7 @@ let schema = @moonschema.Schema::new(
     "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
   },
 )
-println(schema.valid(Json::number(1.0)))   // true
+assert_eq(schema.valid(Json::number(1.0)), true)
 ```
 
 ## Your own keywords
@@ -195,11 +190,12 @@ document. The document's own metaschema decides which are in force — named wit
 assert, with `false` they annotate and assert nothing, and named with `true` and held by nobody the
 document is refused rather than half-read.
 
-<!-- nocheck -->
 ```moonbit
 struct Even {}
 
-pub impl @moonschema.Keyword for Even with fn name(_self) { "x-even" }
+pub impl @moonschema.Keyword for Even with fn name(_self) {
+  "x-even"
+}
 
 pub impl @moonschema.Keyword for Even with fn judge(_self, value, instance, site) {
   ignore(site)
@@ -219,7 +215,7 @@ pub extend Even with @moonschema.Keyword::{name, judge}
 struct Counting {}
 
 pub impl @moonschema.Vocabulary for Counting with fn uri(_self) {
-  "https://example.test/vocab/counting"
+  "https://example.test/vocab/even"
 }
 
 pub impl @moonschema.Vocabulary for Counting with fn keywords(_self) {
@@ -227,12 +223,45 @@ pub impl @moonschema.Vocabulary for Counting with fn keywords(_self) {
   [even]
 }
 
-pub extend Counting with Vocabulary::{uri, keywords}
+pub extend Counting with @moonschema.Vocabulary::{uri, keywords}
 ```
 
 A keyword sees the instance, the keyword's value, and where both sit; it does not apply subschemas.
 A name a built-in keyword already answers to cannot be taken, and two vocabularies cannot claim one
 name: the second registration is refused rather than resolved in someone's favour.
+
+What puts the vocabulary in force is the document's own metaschema, handed over like any other
+document:
+
+```moonbit
+let metaschema = @json.parse(
+  (
+    #|{ "$id": "https://example.test/meta",
+    #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
+    #|  "$vocabulary": {
+    #|    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    #|    "https://example.test/vocab/even": true } }
+  ),
+)
+let remotes = { "https://example.test/meta": metaschema }
+let registry = @moonschema.Registry::new()
+registry.add(Counting::{  })
+let schema = @moonschema.Schema::new(
+  @json.parse(
+    (
+      #|{ "$schema": "https://example.test/meta",
+      #|  "type": "integer", "x-even": true }
+    ),
+  ),
+  remotes~,
+  registry~,
+)
+assert_eq(schema.valid(@json.parse("4")), true)
+assert_eq(
+  schema.faults(@json.parse("5"))[0].to_string(),
+  "the instance: odd (x-even at /x-even)",
+)
+```
 
 ## What it will not do
 
