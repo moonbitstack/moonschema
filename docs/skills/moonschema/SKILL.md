@@ -42,7 +42,10 @@ assert_eq(
 starts from.
 
 ```moonbit
-let report = schema.report(@json.parse("{}"), output=@moonschema.Output::Basic)
+let person = @moonschema.Schema::new(
+  @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+)
+let report = person.report(@json.parse("{}"), output=@moonschema.Output::Basic)
 assert_eq(report.valid, false)
 assert_eq(report.units[0].keyword_at, "/required")
 assert_eq(report.units[0].at, "")
