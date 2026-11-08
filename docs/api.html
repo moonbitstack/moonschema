@@ -185,7 +185,26 @@ schema.valid(@json.parse("\"seven\""))   // false</pre></div>
 <div class="kind-group"><p class="g" id="traits">Traits</p>
 <div class="entry" id="keyword">
 <h3><span class="kind">trait</span>Keyword</h3>
-<p>A keyword someone outside this library defines.</p><p>It is written in a schema as <code>Keyword::name</code> and read once per instance, with the keyword's own value, the instance, and where both sit. It asserts, annotates, or both; it does not apply subschemas — a keyword that has to walk a subschema is an applicator, and applicators are this library's own.</p><pre data-lang="moonbit">struct Even {}</pre><p>pub impl Keyword for Even with fn name(_self) { "x-even" }</p><p>pub impl Keyword for Even with fn judge(_self, value, instance, site) { ignore(site) match (value, instance) { (True, Number(number, ..)) =&gt; if number % 2.0 == 0.0 { Accept } else { Refuse("odd") } _ =&gt; Accept() } }</p><p>pub extend Even with Keyword::{name, judge} ```</p>
+<p>A keyword someone outside this library defines.</p><p>It is written in a schema as <code>Keyword::name</code> and read once per instance, with the keyword's own value, the instance, and where both sit. It asserts, annotates, or both; it does not apply subschemas — a keyword that has to walk a subschema is an applicator, and applicators are this library's own.</p><pre data-lang="moonbit">struct Even {}
+
+pub impl Keyword for Even with fn name(_self) {
+  "x-even"
+}
+
+pub impl Keyword for Even with fn judge(_self, value, instance, site) {
+  ignore(site)
+  match (value, instance) {
+    (True, Number(number, ..)) =&gt;
+      if number % 2.0 == 0.0 {
+        Accept
+      } else {
+        Refuse("odd")
+      }
+    _ =&gt; Accept()
+  }
+}
+
+pub extend Even with Keyword::{name, judge}</pre>
 <div class="sig"><span class="k">pub</span>(open) <span class="k">trait</span> Keyword {</div>
 <div class="member" id="keyword-name"><div class="sig"><span class="k">fn</span> name(Self) -&gt; String</div><p>The name it is written as in a schema.</p></div>
 <div class="member" id="keyword-judge"><div class="sig"><span class="k">fn</span> judge(Self, @json.Json, @json.Json, Site) -&gt; Verdict</div><p>What it says about <code>instance</code> at <code>site</code>.</p></div>

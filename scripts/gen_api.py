@@ -162,33 +162,46 @@ def inline(text):
 
 
 def prose(text):
-    """A doc comment as paragraphs and examples, with `code` set as code."""
+    """A doc comment as paragraphs and examples, with `code` set as code.
+
+    Fences are read first and as a whole: an example holds blank lines between
+    its declarations, and splitting the comment into paragraphs before looking
+    for a fence would turn the tail of every example into prose."""
     if not text:
         return ""
-    out = []
-    for chunk in re.split(r"\n\s*\n", text):
-        lines = [line for line in chunk.split("\n") if line.strip()]
-        if not lines:
-            continue
-        if lines[0].strip().startswith("```"):
-            # A fenced block is an example, and keeps its own line breaks and
-            # indentation: it is code, not prose.
-            # `moon fmt` writes the fence as ```moonbit nocheck; the first word
-            # is the language and the rest is an instruction to the compiler.
-            lang = (lines[0].strip()[3:].strip().split() or ["moonbit"])[0]
-            body = [line for line in lines[1:]]
-            if body and body[-1].strip() == "```":
-                body = body[:-1]
+    out, paragraph, fence, language, code = [], [], None, "", []
+
+    def flush_paragraph():
+        if paragraph:
+            out.append(f"<p>{inline(' '.join(paragraph))}</p>")
+            paragraph.clear()
+
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if fence is None:
+            if stripped.startswith("```"):
+                flush_paragraph()
+                # `moon fmt` writes a fragment's fence as ```mbt nocheck; the
+                # first word is the language and the rest is an instruction to
+                # the compiler. Both spellings are MoonBit, and both are shown
+                # with the one highlighter the pages have.
+                word = (stripped[3:].strip().split() or ["moonbit"])[0]
+                language = "moonbit" if word in ("mbt", "moonbit") else word
+                fence, code = stripped, []
+            elif stripped == "":
+                flush_paragraph()
+            else:
+                paragraph.append(stripped)
+        elif stripped == "```":
             out.append(
-                f'<pre data-lang="{lang}">'
-                + html.escape("\n".join(body), quote=False)
+                f'<pre data-lang="{language}">'
+                + html.escape("\n".join(code), quote=False)
                 + "</pre>"
             )
-            continue
-        # A doc comment is wrapped by hand; a paragraph is the whole run between
-        # two blank comment lines, not one line of it.
-        paragraph = " ".join(line.strip() for line in lines)
-        out.append(f"<p>{inline(paragraph)}</p>")
+            fence, code = None, []
+        else:
+            code.append(line)
+    flush_paragraph()
     return "".join(out)
 
 
