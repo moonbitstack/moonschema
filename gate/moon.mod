@@ -8,5 +8,5 @@ description = "The official JSON-Schema-Test-Suite, run against moonschema. Neve
 
 import {
   "moonbitstack/moonschema@0.2.2",
-  "moonbitlang/x@0.5.6",
+  "moonbitlang/x@0.5.7",
 }

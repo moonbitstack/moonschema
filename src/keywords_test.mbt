@@ -82,3 +82,20 @@ test "propertyDependencies leaves what it evaluated to unevaluatedProperties" {
     false,
   )
 }
+
+///|
+test "a decimal multiple stays a multiple when binary division says otherwise" {
+  // `0.3 / 0.1` is `2.9999999999999996` in binary floating point, and both Ajv
+  // and python-jsonschema refuse this instance because of it. The specification's
+  // own suite requires `0.0075` to be a multiple of `0.0001`, which can only hold
+  // if the division is read as the decimal one the document wrote, so the
+  // remainder the representation leaves behind is allowed for here.
+  let tenth = at("{ \"multipleOf\": 0.1 }", draft=@moonschema.Draft::Draft2020)
+  assert_eq(tenth.valid(@json.parse("0.3")), true)
+  assert_eq(tenth.valid(@json.parse("0.35")), false)
+  let small = at(
+    "{ \"multipleOf\": 0.0001 }",
+    draft=@moonschema.Draft::Draft2020,
+  )
+  assert_eq(small.valid(@json.parse("0.0075")), true)
+}

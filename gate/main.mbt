@@ -154,6 +154,20 @@ fn main {
       println("    " + line)
     }
   }
+  let differential = measure_differential()
+  total = total + differential.passed + differential.failed
+  wrong = wrong + differential.failed
+  println(
+    "differential, against two other implementations".pad_start(40, ' ') +
+    ": " +
+    differential.passed.to_string() +
+    " passed, " +
+    differential.failed.to_string() +
+    " failed",
+  )
+  for line in differential.first {
+    println("    " + line)
+  }
   println(
     "total: " +
     (total - wrong).to_string() +
