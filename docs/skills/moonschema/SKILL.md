@@ -78,6 +78,9 @@ assert_eq(fed.valid(Json::number(2.0)), true)
 - **`schema_at` is the route the walk took, not where the keyword is defined.** A fault reached
   through a reference reports `/properties/port/$ref/maximum`, and `absolute_at` on an output unit is
   the one that names the resource.
+- **A fault's `keyword` is the last step of its `schema_at`, unescaped.** Read either one and you have
+  the other: `/properties/port/$ref/maximum` is `maximum`, and a property named `a/b` appears in the
+  path as `a~1b`. Nothing else has to be consulted to say which keyword refused an instance.
 - **A vocabulary from outside must be registered and asked for.** `Registry::add` refuses a name a
   built-in keyword answers to or one another vocabulary already claimed, and a document whose
   metaschema requires a vocabulary nobody holds raises `Refused` instead of half-reading.

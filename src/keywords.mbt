@@ -20,7 +20,7 @@ fn Schema::check_type(
       if is_type(value, name) {
         true
       } else {
-        note(sink, at, spath, "type", "not of type " + name)
+        note(sink, at, spath, "not of type " + name)
       }
     Array(names) => {
       for name in names {
@@ -28,7 +28,7 @@ fn Schema::check_type(
           return true
         }
       }
-      note(sink, at, spath, "type", "not of any allowed type")
+      note(sink, at, spath, "not of any allowed type")
     }
     _ => true
   }
@@ -54,7 +54,6 @@ fn Schema::check_bound(
   guard schema is Number(limit, ..) && value is Number(number, ..) else {
     return true
   }
-  let keyword = if upper { "maximum" } else { "minimum" }
   let exclusive = self.draft == Draft4 &&
     members.get(if upper { "exclusiveMaximum" } else { "exclusiveMinimum" })
     is Some(True)
@@ -76,7 +75,6 @@ fn Schema::check_bound(
       sink,
       at,
       spath,
-      keyword,
       if upper {
         "above the maximum"
       } else {
@@ -273,12 +271,10 @@ fn Schema::check_contains(
     }
   }
   if found < least {
-    return note(
-      sink, at, spath, "contains", "fewer matching items than required",
-    )
+    return note(sink, at, spath, "fewer matching items than required")
   }
   if most >= 0 && found > most {
-    return note(sink, at, spath, "contains", "more matching items than allowed")
+    return note(sink, at, spath, "more matching items than allowed")
   }
   true
 }
@@ -427,7 +423,7 @@ fn Schema::check_dependencies(
           if needed is String(text) && instance.get(text) is None {
             // The keyword is `dependentRequired`; the property that pulled it in
             // is what the message says, not a step of the schema's own path.
-            all = note(sink, at, spath, keyword, "missing " + text)
+            all = note(sink, at, spath, "missing " + text)
           }
         }
         all

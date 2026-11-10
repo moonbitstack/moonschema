@@ -24,10 +24,7 @@ fn Schema::check(
 ) -> Bool {
   match node {
     True => return true
-    False =>
-      return note(
-        sink, at, spath, "schema", "no instance validates against false",
-      )
+    False => return note(sink, at, spath, "no instance validates against false")
     Object(members) => {
       let here = match
         members.get(if self.draft == Draft4 { "id" } else { "$id" }) {
@@ -106,9 +103,7 @@ fn Schema::check(
                 if allowed.search_by(one => same(one, value)) is Some(_) {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "enum", "not one of the allowed values",
-                  )
+                  note(inner, at, kpath, "not one of the allowed values")
                 }
               _ => true
             }
@@ -116,7 +111,7 @@ fn Schema::check(
             if same(schema, value) {
               true
             } else {
-              note(inner, at, kpath, "const", "not the constant value")
+              note(inner, at, kpath, "not the constant value")
             }
           "multipleOf" =>
             match (schema, value) {
@@ -124,7 +119,7 @@ fn Schema::check(
                 if multiple_of(number, divisor) {
                   true
                 } else {
-                  note(inner, at, kpath, "multipleOf", "not a multiple")
+                  note(inner, at, kpath, "not a multiple")
                 }
               _ => true
             }
@@ -138,9 +133,7 @@ fn Schema::check(
                 if number < limit {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "exclusiveMaximum", "above the maximum",
-                  )
+                  note(inner, at, kpath, "above the maximum")
                 }
               // Before draft-06 this was a flag on `maximum`, handled there.
               _ => true
@@ -151,9 +144,7 @@ fn Schema::check(
                 if number > limit {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "exclusiveMinimum", "below the minimum",
-                  )
+                  note(inner, at, kpath, "below the minimum")
                 }
               _ => true
             }
@@ -163,7 +154,7 @@ fn Schema::check(
                 if code_points(text) <= limit.to_int() {
                   true
                 } else {
-                  note(inner, at, kpath, "maxLength", "longer than allowed")
+                  note(inner, at, kpath, "longer than allowed")
                 }
               _ => true
             }
@@ -173,7 +164,7 @@ fn Schema::check(
                 if code_points(text) >= limit.to_int() {
                   true
                 } else {
-                  note(inner, at, kpath, "minLength", "shorter than allowed")
+                  note(inner, at, kpath, "shorter than allowed")
                 }
               _ => true
             }
@@ -184,9 +175,7 @@ fn Schema::check(
                 if self.matches(expression, text) {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "pattern", "does not match the pattern",
-                  )
+                  note(inner, at, kpath, "does not match the pattern")
                 }
               _ => true
             }
@@ -204,7 +193,7 @@ fn Schema::check(
                 if items.length() <= limit.to_int() {
                   true
                 } else {
-                  note(inner, at, kpath, "maxItems", "more items than allowed")
+                  note(inner, at, kpath, "more items than allowed")
                 }
               _ => true
             }
@@ -214,7 +203,7 @@ fn Schema::check(
                 if items.length() >= limit.to_int() {
                   true
                 } else {
-                  note(inner, at, kpath, "minItems", "fewer items than allowed")
+                  note(inner, at, kpath, "fewer items than allowed")
                 }
               _ => true
             }
@@ -224,7 +213,7 @@ fn Schema::check(
                 if unique(items) {
                   true
                 } else {
-                  note(inner, at, kpath, "uniqueItems", "two items are equal")
+                  note(inner, at, kpath, "two items are equal")
                 }
               _ => true
             }
@@ -264,13 +253,7 @@ fn Schema::check(
                   match name {
                     String(text) =>
                       if instance.get(text) is None {
-                        every = note(
-                          inner,
-                          at,
-                          kpath,
-                          "required",
-                          "missing " + text,
-                        )
+                        every = note(inner, at, kpath, "missing " + text)
                         if inner is None {
                           break
                         }
@@ -288,9 +271,7 @@ fn Schema::check(
                 if instance.length() <= limit.to_int() {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "maxProperties", "more properties than allowed",
-                  )
+                  note(inner, at, kpath, "more properties than allowed")
                 }
               _ => true
             }
@@ -300,9 +281,7 @@ fn Schema::check(
                 if instance.length() >= limit.to_int() {
                   true
                 } else {
-                  note(
-                    inner, at, kpath, "minProperties", "fewer properties than allowed",
-                  )
+                  note(inner, at, kpath, "fewer properties than allowed")
                 }
               _ => true
             }
@@ -365,7 +344,7 @@ fn Schema::check(
                 if any {
                   true
                 } else {
-                  note(inner, at, kpath, "anyOf", "no branch validated")
+                  note(inner, at, kpath, "no branch validated")
                 }
               }
               _ => true
@@ -396,13 +375,12 @@ fn Schema::check(
                   own.take(winner)
                   true
                 } else if count == 0 {
-                  note(inner, at, kpath, "oneOf", "no branch validated")
+                  note(inner, at, kpath, "no branch validated")
                 } else {
                   note(
                     inner,
                     at,
                     kpath,
-                    "oneOf",
                     count.to_string() + " branches validated, not one",
                   )
                 }
@@ -411,9 +389,7 @@ fn Schema::check(
             }
           "not" =>
             if self.check(schema, here, value, at, kpath, None, Marks::new()) {
-              note(
-                inner, at, kpath, "not", "validated against the negated schema",
-              )
+              note(inner, at, kpath, "validated against the negated schema")
             } else {
               true
             }
@@ -464,7 +440,7 @@ fn Schema::check(
                       given = Some(annotation)
                       true
                     }
-                    Refuse(why~) => note(inner, at, kpath, keyword, why)
+                    Refuse(why~) => note(inner, at, kpath, why)
                   }
                 }
               None => true
@@ -539,7 +515,7 @@ fn Schema::refer(
       }
       ok
     }
-    None => note(sink, at, spath, "$ref", "reference resolves to nothing")
+    None => note(sink, at, spath, "reference resolves to nothing")
   }
 }
 
@@ -598,21 +574,22 @@ fn Schema::refer_dynamic(
       }
       ok
     }
-    None =>
-      note(sink, at, spath, "$dynamicRef", "reference resolves to nothing")
+    None => note(sink, at, spath, "reference resolves to nothing")
   }
 }
 
 ///|
 /// Record a fault, and answer `false` so a caller can `return note(...)`.
+///
+/// The keyword is the last step of `schema_at`, and is read from there rather
+/// than passed beside it: two ways of saying which keyword refused an instance
+/// can disagree, and only one of them can be the path the output keeps.
 fn note(
   sink : Array[OutputUnit]?,
   at : String,
   schema_at : String,
-  keyword : String,
   message : String,
 ) -> Bool {
-  ignore(keyword)
   match sink {
     Some(list) =>
       list.push({

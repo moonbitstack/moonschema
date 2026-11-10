@@ -230,3 +230,40 @@ test "the flag output is the cheapest, and says the same thing" {
   assert_eq(schema.report(@json.parse("0")).units.length(), 0)
   assert_eq(@moonschema.output, @moonschema.Output::Flag)
 }
+
+///|
+test "a keyword with one reason says it on its own unit" {
+  // The walk gives a keyword a unit and its reasons a level under it; when the
+  // only reason is the keyword's own — same place in the schema, same place in
+  // the instance — the unit carries it instead of enclosing it, and the verbose
+  // format is where that shape is visible.
+  let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+  let report = schema.report(
+    @json.parse("\"x\""),
+    output=@moonschema.Output::Verbose,
+  )
+  assert_eq(
+    text(report),
+    (
+      #|{
+      #|  "valid": false,
+      #|  "errors": [
+      #|    {
+      #|      "valid": false,
+      #|      "keywordLocation": "/type",
+      #|      "instanceLocation": "",
+      #|      "error": "not of type integer"
+      #|    }
+      #|  ]
+      #|}
+    ),
+  )
+  // The same unit read flat: one entry, not an entry and a child under it.
+  let flat = schema.report(
+    @json.parse("\"x\""),
+    output=@moonschema.Output::Basic,
+  )
+  assert_eq(flat.units.length(), 1)
+  assert_eq(flat.units[0].children.length(), 0)
+  assert_eq(flat.units[0].error, Some("not of type integer"))
+}

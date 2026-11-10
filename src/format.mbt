@@ -64,7 +64,7 @@ fn Schema::check_format(
   // failure of the instance, and only v1 makes it a failure of the schema.
   match judge_format(name, text, self.draft) {
     Some(true) => true
-    Some(false) => note(sink, at, spath, "format", "not a valid " + name)
+    Some(false) => note(sink, at, spath, "not a valid " + name)
     None => true
   }
 }
