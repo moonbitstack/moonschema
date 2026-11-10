@@ -56,6 +56,7 @@
       <li><a href="#vocabularies">Your own keywords</a></li>
       <li><a href="#refusals">Refusals</a></li>
       <li><a href="#limits">Where it stops</a></li>
+      <li><a href="#conformance">Checked against</a></li>
     </ol>
   </aside>
 
@@ -927,6 +928,72 @@ false</pre>
         <code>faults</code> is the basic format flattened to the reasons. The
         preset <code>@moonschema.output</code> is <code>Flag</code>, because the common case is a
         guard that wants a yes or a no.
+      </p>
+    </section>
+
+    <section id="conformance">
+      <p class="eyebrow">15 · Checked against</p>
+      <h2>What it was checked against</h2>
+      <p class="lead">
+        The specification has no reference implementation, so it publishes cases instead: one suite,
+        every keyword, every version, written by the people who wrote the other validators. Every one
+        of them runs here, and so does a corpus that two other implementations already agree on.
+      </p>
+
+      <p>
+        The suite is the specification's own, and it is the whole of the required set at each of the
+        six versions, plus the parts it calls optional and this library claims: the
+        <code>format</code> sets, the assertion and annotation vocabularies, the output-format cases,
+        and the v1 proposals. A case that failed would be listed here rather than omitted, so an
+        empty failure column is the claim.
+      </p>
+
+      <p>
+        A suite answers whether the verdicts are right, not whether another validator would have
+        reached them. For that, a fixed corpus of documents and instances is judged by Ajv and by
+        python-jsonschema, and only the cases the two agree on are kept — the library is then held to
+        somebody else's opinion rather than its own. The corpus is in the repository with the script
+        that generated it, and the run is part of the same gate, so this row moves with the others.
+      </p>
+
+      <!-- conformance:begin -->
+<div class="table-cloth" data-reveal>
+  <table class="sheet">
+    <thead>
+      <tr><th>Set</th><th>Cases</th><th>Failed</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>draft4</code></td><td>618</td><td>0</td></tr>
+      <tr><td><code>draft6</code></td><td>841</td><td>0</td></tr>
+      <tr><td><code>draft7</code></td><td>929</td><td>0</td></tr>
+      <tr><td><code>draft2019-09</code></td><td>1,261</td><td>0</td></tr>
+      <tr><td><code>draft2020-12</code></td><td>1,301</td><td>0</td></tr>
+      <tr><td><code>v1</code></td><td>1,135</td><td>0</td></tr>
+      <tr><td><code>v1/proposals/propertyDependencies</code></td><td>38</td><td>0</td></tr>
+      <tr><td><code>draft4/optional/format</code></td><td>291</td><td>0</td></tr>
+      <tr><td><code>draft6/optional/format</code></td><td>407</td><td>0</td></tr>
+      <tr><td><code>draft7/optional/format</code></td><td>785</td><td>0</td></tr>
+      <tr><td><code>draft2019-09/optional/format</code></td><td>866</td><td>0</td></tr>
+      <tr><td><code>draft2020-12/optional/format</code></td><td>866</td><td>0</td></tr>
+      <tr><td><code>v1/format</code></td><td>860</td><td>0</td></tr>
+      <tr><td><code>draft2020-12/optional/format-assertion.json</code></td><td>4</td><td>0</td></tr>
+      <tr><td><code>v1/optional/format-annotation.json</code></td><td>133</td><td>0</td></tr>
+      <tr><td><code>outputs: draft2019-09</code></td><td>4</td><td>0</td></tr>
+      <tr><td><code>outputs: draft2020-12</code></td><td>4</td><td>0</td></tr>
+      <tr><td><code>differential, against two other implementations</code></td><td>676</td><td>0</td></tr>
+      <tr><td><b>Total</b></td><td><b>11,019</b></td><td><b>0</b></td></tr>
+    </tbody>
+  </table>
+</div>
+<!-- conformance:end -->
+
+      <p>
+        One construct is read differently on purpose. <code>multipleOf</code> with a divisor that is
+        not a binary fraction: <code>0.3</code> against <code>{"multipleOf": 0.1}</code> is refused by
+        both references, because <code>0.3 / 0.1</code> is <code>2.9999999999999996</code> in binary
+        floating point. The suite requires <code>0.0075</code> to be a multiple of
+        <code>0.0001</code>, which can only hold if the division is the decimal one the document
+        wrote, so this library allows the remainder the representation leaves behind.
       </p>
     </section>
 

@@ -102,4 +102,12 @@ jobs:
         run: |
           moon update
           cd gate
-          moon run . --target native
+          moon run . --target native > ../gate.log
+          cat ../gate.log
+
+      # The counts on the README and the guide are the gate's own output. A page
+      # that says a number the run no longer prints is worse than no number.
+      - name: the published counts are the run's
+        run: |
+          python3 scripts/gen_conformance.py gate.log
+          git diff --exit-code README.md docs/guide.html

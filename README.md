@@ -271,6 +271,52 @@ assert_eq(
 - **Hyper-schema.** Links and media types are a different specification.
 - **Compile schemas to code.** Interpretation first; a measurement is the time to argue about it.
 
+## Conformance
+
+The specification has no reference implementation, so it publishes cases instead: one suite covering
+every keyword at every version, written by the people who wrote the other validators. All of it runs
+here — the required cases at each of the six versions, the optional `format` sets, the output-format
+cases, and the v1 proposals.
+
+A suite is not the whole question, though: it says whether the answers are right, not whether another
+validator would have given them. So a second run replays a fixed corpus against this library and
+against two mature implementations — Ajv and python-jsonschema — keeping only the cases where those
+two agree with each other, so that the corpus is somebody else's opinion and not this library's.
+
+The table is the gate's own output, put into this page by a script so that a count here cannot go
+stale:
+
+<!-- conformance:begin -->
+<table>
+<tr><th>Set</th><th>Cases</th><th>Failed</th></tr>
+<tr><td><code>draft4</code></td><td>618</td><td>0</td></tr>
+<tr><td><code>draft6</code></td><td>841</td><td>0</td></tr>
+<tr><td><code>draft7</code></td><td>929</td><td>0</td></tr>
+<tr><td><code>draft2019-09</code></td><td>1,261</td><td>0</td></tr>
+<tr><td><code>draft2020-12</code></td><td>1,301</td><td>0</td></tr>
+<tr><td><code>v1</code></td><td>1,135</td><td>0</td></tr>
+<tr><td><code>v1/proposals/propertyDependencies</code></td><td>38</td><td>0</td></tr>
+<tr><td><code>draft4/optional/format</code></td><td>291</td><td>0</td></tr>
+<tr><td><code>draft6/optional/format</code></td><td>407</td><td>0</td></tr>
+<tr><td><code>draft7/optional/format</code></td><td>785</td><td>0</td></tr>
+<tr><td><code>draft2019-09/optional/format</code></td><td>866</td><td>0</td></tr>
+<tr><td><code>draft2020-12/optional/format</code></td><td>866</td><td>0</td></tr>
+<tr><td><code>v1/format</code></td><td>860</td><td>0</td></tr>
+<tr><td><code>draft2020-12/optional/format-assertion.json</code></td><td>4</td><td>0</td></tr>
+<tr><td><code>v1/optional/format-annotation.json</code></td><td>133</td><td>0</td></tr>
+<tr><td><code>outputs: draft2019-09</code></td><td>4</td><td>0</td></tr>
+<tr><td><code>outputs: draft2020-12</code></td><td>4</td><td>0</td></tr>
+<tr><td><code>differential, against two other implementations</code></td><td>676</td><td>0</td></tr>
+<tr><td><b>Total</b></td><td><b>11,019</b></td><td><b>0</b></td></tr>
+</table>
+<!-- conformance:end -->
+
+No case fails. One construct is read differently on purpose: `multipleOf` with a divisor that is not a
+binary fraction. Both references refuse `0.3` against `{"multipleOf": 0.1}`, because `0.3 / 0.1` is
+`2.9999999999999996` in binary floating point. The suite requires `0.0075` to be a multiple of
+`0.0001`, which can only hold if the division is the decimal one the document wrote, so this library
+allows the remainder the representation leaves behind and takes the suite's side.
+
 ## Examples
 
 Each is a program with its real output, run with `moon run src/examples/<name>`. The last is the
