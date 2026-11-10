@@ -173,7 +173,8 @@ false</pre>
         object §12.4 describes, which is the one to send over a wire.
       </p>
 
-      <table class="sheet">
+      <div class="table-cloth">
+        <table class="sheet">
         <thead>
           <tr><th>Format</th><th>Says</th></tr>
         </thead>
@@ -184,6 +185,7 @@ false</pre>
           <tr><td><code>Verbose</code></td><td>the whole tree, annotations and passes included</td></tr>
         </tbody>
       </table>
+      </div>
 
       <pre data-lang="moonbit">fn main raise {
   let schema = @moonschema.Schema::new(
@@ -529,7 +531,8 @@ true</pre>
         where v1 asserts and everything before it annotates.
       </p>
 
-      <table class="sheet">
+      <div class="table-cloth">
+        <table class="sheet">
         <thead>
           <tr><th>Group</th><th>Names, and the RFC behind each</th></tr>
         </thead>
@@ -541,6 +544,7 @@ true</pre>
           <tr><td>Values</td><td><code>uuid</code> — RFC 4122; <code>json-pointer</code> — RFC 6901; <code>relative-json-pointer</code>; <code>regex</code> — ECMA-262</td></tr>
         </tbody>
       </table>
+      </div>
 
       <p>
         A name this does not know asserts nothing, because a format is the schema author's word for

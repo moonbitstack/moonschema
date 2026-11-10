@@ -1142,7 +1142,7 @@ footer.site{
   border-bottom:1px dashed var(--thread);
   color:var(--ink);
 }
-.variants li small{font-family:var(--sans);font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.variants li small{font-family:var(--sans);font-size:13.5px;color:var(--ink-2);line-height:1.55;overflow-wrap:anywhere}
 .variants li small code{font-size:.86em;background:var(--cloth-2);border:1px solid var(--thread);border-radius:4px;padding:0 4px}
 .kind-group{margin:0 0 10px}
 .kind-group > .g{
@@ -1180,6 +1180,11 @@ footer.site{
   .brand small{display:none}
   nav.top a{padding:6px 8px}
   .wrap{padding:0 18px}
+  /* A signature such as `Annotate(annotation~ : @json.Json)` is a single
+     unbreakable token in mono, so the two columns of a member stack on a phone
+     rather than pushing the page wider than the screen. */
+  .variants li{grid-template-columns:minmax(0,1fr);gap:2px}
+  .variants li{overflow-wrap:anywhere}
   section{padding:52px 0}
   .hero{padding:40px 0 30px}
 }
