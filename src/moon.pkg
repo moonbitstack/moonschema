@@ -12,5 +12,5 @@ import {
 
 import {
   "moonbitstack/moonschema",
-  "moonbitlang/core/json",
+  "moonbitstack/moonjson/json",
 } for "test"

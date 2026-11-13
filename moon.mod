@@ -34,4 +34,5 @@ import {
   "moonbitstack/moondate@0.1.6",
   "moonbitstack/moonregex@0.1.5",
   "moonbitstack/moonurl@0.2.6",
+  "moonbitstack/moonjson@0.5.0",
 }

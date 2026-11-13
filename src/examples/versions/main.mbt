@@ -10,7 +10,7 @@ fn main raise {
   // number of its own from draft-06. A document holding the flag means "ten is
   // out of bounds" at draft-04, and at every later version the flag is not a
   // number, asserts nothing, and ten is allowed.
-  let flag = @json.parse("{ \"maximum\": 10, \"exclusiveMaximum\": true }")
+  let flag = @json.loads("{ \"maximum\": 10, \"exclusiveMaximum\": true }")
   println("maximum 10, exclusiveMaximum true — is ten allowed?")
   for
     draft in [
@@ -37,9 +37,9 @@ fn main raise {
   for pair in spellings {
     let (label, text) = pair
     for draft in [@moonschema.Draft::Draft2019, Draft2020] {
-      let schema = @moonschema.Schema::new(@json.parse(text), draft~)
+      let schema = @moonschema.Schema::new(@json.loads(text), draft~)
       println(
-        "  \{label} at \{draft}:  [2] is \{schema.valid(@json.parse("[2]"))}",
+        "  \{label} at \{draft}:  [2] is \{schema.valid(@json.loads("[2]"))}",
       )
     }
   }
@@ -47,17 +47,17 @@ fn main raise {
   // `dependencies` was split in 2019-09 into `dependentRequired` for the names
   // and `dependentSchemas` for the schemas. A document that writes the new pair
   // is a document from 2019-09 or later; at draft-07 both names are unknown.
-  let needs = @json.parse("{ \"dependentRequired\": { \"a\": [\"b\"] } }")
+  let needs = @json.loads("{ \"dependentRequired\": { \"a\": [\"b\"] } }")
   println("\ndependentRequired — a needs b — for the instance {\"a\": 1}:")
   for draft in [@moonschema.Draft::Draft7, Draft2019, Draft2020] {
     let schema = @moonschema.Schema::new(needs, draft~)
-    println("  \{draft}  \{schema.valid(@json.parse("{\"a\": 1}"))}")
+    println("  \{draft}  \{schema.valid(@json.loads("{\"a\": 1}"))}")
   }
 
   // `propertyDependencies` arrived in v1: one property's value chooses the
   // subschema the whole instance is then validated against. Before v1 the
   // keyword is unknown, and an unknown keyword asserts nothing.
-  let chosen = @json.parse(
+  let chosen = @json.loads(
     (
       #|{ "propertyDependencies": {
       #|    "kind": { "card": { "required": ["number"] } } } }
@@ -66,12 +66,12 @@ fn main raise {
   println("\npropertyDependencies — a card needs a number:")
   for draft in [@moonschema.Draft::Draft2020, V1] {
     let schema = @moonschema.Schema::new(chosen, draft~)
-    println("  \{draft}  \{schema.valid(@json.parse("{\"kind\": \"card\"}"))}")
+    println("  \{draft}  \{schema.valid(@json.loads("{\"kind\": \"card\"}"))}")
   }
 
   // A document that names a version is read at the version it names, whatever
   // the `draft` argument says: the document is the more specific of the two.
-  let named = @json.parse(
+  let named = @json.loads(
     (
       #|{ "$schema": "http://json-schema.org/draft-04/schema#",
       #|  "maximum": 10, "exclusiveMaximum": true }

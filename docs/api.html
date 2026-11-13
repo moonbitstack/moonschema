@@ -143,9 +143,9 @@
 <div class="sig"><span class="k">pub</span> <span class="k">struct</span> Schema</div>
 <div class="member" id="schema-faults"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::faults(Self, @json.Json) -&gt; Array[Fault]</div><p>Every reason <code>instance</code> failed, or an empty array when it validated.</p><p>The reasons, and not the shape of the walk: each fault says where in the instance it was, which keyword refused it, and where that keyword was. <code>Schema::report</code> is the other reading of the same walk, in the four formats §12 names.</p><pre data-lang="moonbit">test {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+    @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
   )
-  let faults = schema.faults(@json.parse("0"))
+  let faults = schema.faults(@json.loads("0"))
   assert_eq(faults.length(), 1)
   assert_eq(faults[0].at, "")
   assert_eq(faults[0].keyword, "minimum")
@@ -154,24 +154,24 @@
 }</pre></div>
 <div class="member" id="schema-new"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::new(@json.Json, draft? : Draft, remotes? : Map[String, @json.Json], format? : Bool, registry? : Registry) -&gt; Self raise Refused</div><p>Read a schema document.</p><p><code>draft</code> is the version to read it at when it does not name one; a <code>$schema</code> it does name wins. <code>remotes</code> are the documents a <code>$ref</code> may reach, each under the URI it is referred to by.</p><p><code>registry</code> holds the vocabularies a document may ask for beyond the built-in ones: a <code>$vocabulary</code> naming one of them puts its keywords in force, naming one nobody holds with <code>true</code> refuses the document, and naming it with <code>false</code> leaves its keywords as annotations.</p><p><code>format</code> decides whether <code>format</code> asserts. Left out, the document answers for itself: an annotation before v1 unless its dialect's metaschema declares the assertion vocabulary, and an assertion throughout v1. Given, it is the answer, because a call is more specific than a document's dialect, which is more specific than a version's default.</p><pre data-lang="moonbit">test {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+    @json.loads("{ \"type\": \"object\", \"required\": [\"id\"] }"),
   )
-  assert_eq(schema.valid(@json.parse("{\"id\": 1}")), true)
-  assert_eq(schema.valid(@json.parse("{}")), false)
+  assert_eq(schema.valid(@json.loads("{\"id\": 1}")), true)
+  assert_eq(schema.valid(@json.loads("{}")), false)
 }</pre></div>
 <div class="member" id="schema-report"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::report(Self, @json.Json, output? : Output) -&gt; Report</div><p>Validate <code>instance</code> and answer in the format <code>output</code> names.</p><pre data-lang="moonbit">test {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+    @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
   )
-  let report = schema.report(@json.parse("0"), output=@moonschema.Output::Basic)
+  let report = schema.report(@json.loads("0"), output=@moonschema.Output::Basic)
   assert_eq(report.valid, false)
   assert_eq(report.units[0].keyword_at, "/minimum")
   assert_eq(report.units[0].error, Some("below the minimum"))
 }</pre></div>
 <div class="member" id="schema-valid"><div class="sig"><span class="k">pub</span> <span class="k">fn</span> Schema::valid(Self, @json.Json) -&gt; Bool</div><p>Whether <code>instance</code> validates.</p><p>This is the flag output (§12.4.1): the cheapest answer, and the one a guard on a request wants. <code>Schema::faults</code> says why not.</p><pre data-lang="moonbit">test {
-  let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
-  assert_eq(schema.valid(@json.parse("7")), true)
-  assert_eq(schema.valid(@json.parse("\"seven\"")), false)
+  let schema = @moonschema.Schema::new(@json.loads("{ \"type\": \"integer\" }"))
+  assert_eq(schema.valid(@json.loads("7")), true)
+  assert_eq(schema.valid(@json.loads("\"seven\"")), false)
 }</pre></div>
 </div>
 <div class="entry" id="site">
@@ -238,7 +238,7 @@ pub impl @moonschema.Vocabulary for ParityVocabulary with fn keywords(_self) {
 pub extend ParityVocabulary with @moonschema.Vocabulary::{uri, keywords}
 
 test {
-  let metaschema = @json.parse(
+  let metaschema = @json.loads(
     (
       #|{ "$id": "https://example.test/meta",
       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -250,7 +250,7 @@ test {
   let registry = @moonschema.Registry::new()
   registry.add(ParityVocabulary::{ })
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$schema": "https://example.test/meta",
         #|  "type": "integer", "x-parity": true }
@@ -259,8 +259,8 @@ test {
     remotes={ "https://example.test/meta": metaschema },
     registry~,
   )
-  assert_eq(schema.valid(@json.parse("4")), true)
-  assert_eq(schema.faults(@json.parse("5"))[0].message, "odd")
+  assert_eq(schema.valid(@json.loads("4")), true)
+  assert_eq(schema.faults(@json.loads("5"))[0].message, "odd")
 }</pre>
 <div class="sig"><span class="k">pub</span>(open) <span class="k">trait</span> Keyword {</div>
 <div class="member" id="keyword-name"><div class="sig"><span class="k">fn</span> name(Self) -&gt; String</div><p>The name it is written as in a schema.</p></div>

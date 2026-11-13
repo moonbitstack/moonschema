@@ -74,15 +74,15 @@
 
       <p>
         A schema is a <code>Json</code> tree. The package does not parse JSON — that is a caller's
-        job, and the core library's <code>@json.parse</code> does it.
+        job, and the core library's <code>@json.loads</code> does it.
       </p>
 
       <pre data-lang="moonbit">fn main raise {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"integer\" }"),
+    @json.loads("{ \"type\": \"integer\" }"),
   )
-  println(schema.valid(@json.parse("7")))
-  println(schema.valid(@json.parse("\"seven\"")))
+  println(schema.valid(@json.loads("7")))
+  println(schema.valid(@json.loads("\"seven\"")))
 }</pre>
       <pre class="out" data-lang="text">true
 false</pre>
@@ -114,7 +114,7 @@ false</pre>
 
       <pre data-lang="moonbit">fn main raise {
   let person = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "type": "object",
         #|  "properties": { "name": { "type": "string", "minLength": 1 } },
@@ -122,10 +122,10 @@ false</pre>
       ),
     ),
   )
-  for fault in person.faults(@json.parse("{}")) {
+  for fault in person.faults(@json.loads("{}")) {
     println(fault.to_string())
   }
-  for fault in person.faults(@json.parse("{\"name\": \"\"}")) {
+  for fault in person.faults(@json.loads("{\"name\": \"\"}")) {
     println(fault.to_string())
   }
 }</pre>
@@ -189,9 +189,9 @@ false</pre>
 
       <pre data-lang="moonbit">fn main raise {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+    @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
   )
-  let report = schema.report(@json.parse("0"), output=@moonschema.Output::Basic)
+  let report = schema.report(@json.loads("0"), output=@moonschema.Output::Basic)
   println(report.to_json().stringify(indent=2))
 }</pre>
       <pre class="out" data-lang="json">{
@@ -241,7 +241,7 @@ false</pre>
       </p>
 
       <pre data-lang="moonbit">let schema = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "$id": "https://example.test/point",
       #|  "$defs": { "num": { "type": "integer" } },
@@ -249,7 +249,7 @@ false</pre>
     ),
   ),
 )
-let report = schema.report(@json.parse("\"seven\""), output=@moonschema.Output::Basic)
+let report = schema.report(@json.loads("\"seven\""), output=@moonschema.Output::Basic)
 for unit in report.units {
   let place = match unit.absolute_at {
     Some(found) => found
@@ -297,7 +297,7 @@ draft-07
         whatever the argument says.
       </p>
 
-      <pre data-lang="moonbit">let named = @json.parse(
+      <pre data-lang="moonbit">let named = @json.loads(
   (
     #|{ "$schema": "http://json-schema.org/draft-04/schema#",
     #|  "maximum": 10, "exclusiveMaximum": true }
@@ -327,7 +327,7 @@ println(schema.valid(Json::number(10.0)))</pre>
         <code>$dynamicAnchor</code> of the same name before the dynamic scope takes over:
       </p>
 
-      <pre data-lang="moonbit">let chosen = @json.parse(
+      <pre data-lang="moonbit">let chosen = @json.loads(
   (
     #|{ "propertyDependencies": {
     #|    "kind": { "card": { "required": ["number"] } } } }
@@ -335,7 +335,7 @@ println(schema.valid(Json::number(10.0)))</pre>
 )
 for draft in [@moonschema.Draft::Draft2020, V1] {
   let schema = @moonschema.Schema::new(chosen, draft~)
-  println("\{draft}  \{schema.valid(@json.parse("{\"kind\": \"card\"}"))}")
+  println("\{draft}  \{schema.valid(@json.loads("{\"kind\": \"card\"}"))}")
 }</pre>
       <pre class="out" data-lang="text">2020-12  true
 v1  false</pre>
@@ -358,7 +358,7 @@ v1  false</pre>
       </p>
 
       <pre data-lang="moonbit">let headers = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "properties": { "id": { "type": "string" } },
       #|  "patternProperties": { "^x-": { "type": "string" } },
@@ -369,7 +369,7 @@ v1  false</pre>
   ),
 )
 for fault in headers.faults(
-  @json.parse("{\"id\": 7, \"x-trace\": 9, \"n\": true}"),
+  @json.loads("{\"id\": 7, \"x-trace\": 9, \"n\": true}"),
 ) {
   println(fault.to_string())
 }</pre>
@@ -384,9 +384,9 @@ the instance: missing rev (dependentRequired at /dependentRequired)</pre>
       </p>
 
       <pre data-lang="moonbit">let keys = @moonschema.Schema::new(
-  @json.parse("{ \"propertyNames\": { \"pattern\": \"^[a-z]+$\" } }"),
+  @json.loads("{ \"propertyNames\": { \"pattern\": \"^[a-z]+$\" } }"),
 )
-for fault in keys.faults(@json.parse("{\"User Name\": 1}")) {
+for fault in keys.faults(@json.loads("{\"User Name\": 1}")) {
   println(fault.to_string())
 }</pre>
       <pre class="out" data-lang="text">/User Name: does not match the pattern (pattern at /propertyNames/pattern)</pre>
@@ -410,7 +410,7 @@ for fault in keys.faults(@json.parse("{\"User Name\": 1}")) {
       </p>
 
       <pre data-lang="moonbit">let batch = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "type": "array",
       #|  "prefixItems": [{ "type": "string" }],
@@ -420,10 +420,10 @@ for fault in keys.faults(@json.parse("{\"User Name\": 1}")) {
     ),
   ),
 )
-for fault in batch.faults(@json.parse("[\"a\", 1, 1]")) {
+for fault in batch.faults(@json.loads("[\"a\", 1, 1]")) {
   println(fault.to_string())
 }
-println(batch.valid(@json.parse("[\"a\", 0]")))</pre>
+println(batch.valid(@json.loads("[\"a\", 0]")))</pre>
       <pre class="out" data-lang="text">the instance: two items are equal (uniqueItems at /uniqueItems)
 the instance: fewer matching items than required (contains at /contains)
 true</pre>
@@ -451,7 +451,7 @@ true</pre>
       </p>
 
       <pre data-lang="moonbit">let word = @moonschema.Schema::new(
-  @json.parse("{ \"type\": \"string\", \"minLength\": 2, \"maxLength\": 3 }"),
+  @json.loads("{ \"type\": \"string\", \"minLength\": 2, \"maxLength\": 3 }"),
 )
 println(word.valid(Json::string("<span class='w2'>中</span>")))  // false — one code point
 println(word.valid(Json::string("a")))   // false — one as well
@@ -473,7 +473,7 @@ true</pre>
       </p>
 
       <pre data-lang="moonbit">let letters = @moonschema.Schema::new(
-  @json.parse("{ \"pattern\": \"^\\\\p{Letter}+$\" }"),
+  @json.loads("{ \"pattern\": \"^\\\\p{Letter}+$\" }"),
 )
 println(letters.valid(Json::string("Ünïcode")))
 println(letters.valid(Json::string("Ün1code")))</pre>
@@ -486,11 +486,11 @@ false</pre>
       </p>
 
       <pre data-lang="moonbit">let han = @moonschema.Schema::new(
-  @json.parse("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }"),
+  @json.loads("{ \"pattern\": \"^\\\\p{Script=Han}+$\" }"),
 )
 println(han.valid(Json::string("<span class='w2'>中</span>")))
 let typo = @moonschema.Schema::new(
-  @json.parse("{ \"pattern\": \"^\\\\p{Scrpt=Han}+$\" }"),
+  @json.loads("{ \"pattern\": \"^\\\\p{Scrpt=Han}+$\" }"),
 )
 println(typo.valid(Json::string("<span class='w2'>中</span>")))</pre>
       <pre class="out" data-lang="text">true
@@ -506,14 +506,14 @@ false</pre>
         before v1 the answer is no unless you ask.
       </p>
 
-      <pre data-lang="moonbit">let lenient = @moonschema.Schema::new(@json.parse("{ \"format\": \"date-time\" }"))
-println(lenient.valid(@json.parse("\"1990-02-31T15:59:59Z\"")))
+      <pre data-lang="moonbit">let lenient = @moonschema.Schema::new(@json.loads("{ \"format\": \"date-time\" }"))
+println(lenient.valid(@json.loads("\"1990-02-31T15:59:59Z\"")))
 let strict = @moonschema.Schema::new(
-  @json.parse("{ \"format\": \"date-time\" }"),
+  @json.loads("{ \"format\": \"date-time\" }"),
   format=true,
 )
-println(strict.valid(@json.parse("\"1990-02-31T15:59:59Z\"")))
-println(strict.valid(@json.parse("\"1998-12-31T23:59:60Z\"")))</pre>
+println(strict.valid(@json.loads("\"1990-02-31T15:59:59Z\"")))
+println(strict.valid(@json.loads("\"1998-12-31T23:59:60Z\"")))</pre>
       <pre class="out" data-lang="text">true
 false
 true</pre>
@@ -569,9 +569,9 @@ true</pre>
         integers.
       </p>
 
-      <pre data-lang="moonbit">let whole = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
-println(whole.valid(@json.parse("1.0")))
-println(whole.valid(@json.parse("1.5")))</pre>
+      <pre data-lang="moonbit">let whole = @moonschema.Schema::new(@json.loads("{ \"type\": \"integer\" }"))
+println(whole.valid(@json.loads("1.0")))
+println(whole.valid(@json.loads("1.5")))</pre>
       <pre class="out" data-lang="text">true
 false</pre>
 
@@ -582,10 +582,10 @@ false</pre>
       </p>
 
       <pre data-lang="moonbit">let steps = @moonschema.Schema::new(
-  @json.parse("{ \"type\": \"number\", \"multipleOf\": 0.0001 }"),
+  @json.loads("{ \"type\": \"number\", \"multipleOf\": 0.0001 }"),
 )
-println(steps.valid(@json.parse("0.0075")))
-println(steps.valid(@json.parse("0.00751")))</pre>
+println(steps.valid(@json.loads("0.0075")))
+println(steps.valid(@json.loads("0.00751")))</pre>
       <pre class="out" data-lang="text">true
 false</pre>
 
@@ -608,7 +608,7 @@ false</pre>
       </p>
 
       <pre data-lang="moonbit">let one = @moonschema.Schema::new(
-  @json.parse("{ \"oneOf\": [ { \"type\": \"integer\" }, { \"minimum\": 0 } ] }"),
+  @json.loads("{ \"oneOf\": [ { \"type\": \"integer\" }, { \"minimum\": 0 } ] }"),
 )
 for fault in one.faults(Json::number(3.0)) {
   println(fault.to_string())
@@ -622,7 +622,7 @@ for fault in one.faults(Json::number(3.0)) {
       </p>
 
       <pre data-lang="moonbit">let shipping = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "properties": { "country": {}, "postcode": {} },
       #|  "if": { "properties": { "country": { "const": "US" } } },
@@ -632,7 +632,7 @@ for fault in one.faults(Json::number(3.0)) {
   ),
 )
 for fault in shipping.faults(
-  @json.parse("{\"country\": \"US\", \"postcode\": \"9410\"}"),
+  @json.loads("{\"country\": \"US\", \"postcode\": \"9410\"}"),
 ) {
   println(fault.to_string())
 }</pre>
@@ -647,7 +647,7 @@ for fault in shipping.faults(
       </p>
 
       <pre data-lang="moonbit">let closed = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "allOf": [
       #|    { "properties": { "name": { "type": "string" } } },
@@ -657,7 +657,7 @@ for fault in shipping.faults(
   ),
 )
 for fault in closed.faults(
-  @json.parse("{\"name\": \"Ada\", \"email\": \"a@b.test\"}"),
+  @json.loads("{\"name\": \"Ada\", \"email\": \"a@b.test\"}"),
 ) {
   println(fault.to_string())
 }</pre>
@@ -682,14 +682,14 @@ for fault in closed.faults(
       </p>
 
       <pre data-lang="moonbit">let order = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "$defs": { "port": { "type": "integer", "maximum": 65535 } },
       #|  "properties": { "port": { "$ref": "#/$defs/port" } } }
     ),
   ),
 )
-for fault in order.faults(@json.parse("{\"port\": 70000}")) {
+for fault in order.faults(@json.loads("{\"port\": 70000}")) {
   println(fault.to_string())
 }</pre>
       <pre class="out" data-lang="text">/port: above the maximum (maximum at /properties/port/$ref/maximum)</pre>
@@ -701,7 +701,7 @@ for fault in order.faults(@json.parse("{\"port\": 70000}")) {
       </p>
 
       <pre data-lang="moonbit">let money = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "$id": "https://example.test/order",
       #|  "$defs": { "money": { "$id": "money", "type": "object",
@@ -711,7 +711,7 @@ for fault in order.faults(@json.parse("{\"port\": 70000}")) {
     ),
   ),
 )
-for fault in money.faults(@json.parse("{\"total\": {\"cents\": \"12.50\"}}")) {
+for fault in money.faults(@json.loads("{\"total\": {\"cents\": \"12.50\"}}")) {
   println(fault.to_string())
 }</pre>
       <pre class="out" data-lang="text">/total/cents: not of type integer (type at /properties/total/$ref/properties/cents/type)</pre>
@@ -728,7 +728,7 @@ for fault in money.faults(@json.parse("{\"total\": {\"cents\": \"12.50\"}}")) {
         nowhere, and landing nowhere is a fault.
       </p>
 
-      <pre data-lang="moonbit">let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+      <pre data-lang="moonbit">let remote = @json.loads("{ \"$ref\": \"https://example.test/int\" }")
 
 let alone = @moonschema.Schema::new(remote)
 for fault in alone.faults(Json::number(1.0)) {
@@ -738,7 +738,7 @@ for fault in alone.faults(Json::number(1.0)) {
 let fed = @moonschema.Schema::new(
   remote,
   remotes={
-    "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
+    "https://example.test/int": @json.loads("{ \"type\": \"integer\" }"),
   },
 )
 println(fed.valid(Json::number(1.0)))</pre>
@@ -817,7 +817,7 @@ pub extend Measures with @moonschema.Vocabulary::{uri, keywords}</pre>
         <code>remotes</code> like any other document:
       </p>
 
-      <pre data-lang="moonbit">let metaschema = @json.parse(
+      <pre data-lang="moonbit">let metaschema = @json.loads(
   (
     #|{ "$id": "https://example.test/meta",
     #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -830,7 +830,7 @@ let remotes = { "https://example.test/meta": metaschema }
 let registry = @moonschema.Registry::new()
 registry.add(Measures::{  })
 let schema = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "$schema": "https://example.test/meta",
       #|  "type": "number", "x-units": 2 }
@@ -840,7 +840,7 @@ let schema = @moonschema.Schema::new(
   registry~,
 )
 for text in ["1.25", "1.234"] {
-  println("\{text}  \{schema.valid(@json.parse(text))}")
+  println("\{text}  \{schema.valid(@json.loads(text))}")
 }</pre>
       <pre class="out" data-lang="text">1.25  true
 1.234  false</pre>
@@ -878,7 +878,7 @@ for text in ["1.25", "1.234"] {
 
       <pre data-lang="moonbit">let refused = try {
   @moonschema.Schema::new(
-    @json.parse("{ \"$schema\": \"https://example.test/v9\" }"),
+    @json.loads("{ \"$schema\": \"https://example.test/v9\" }"),
   ) |> ignore
   "read it anyway"
 } catch {

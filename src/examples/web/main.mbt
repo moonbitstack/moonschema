@@ -14,11 +14,11 @@
 /// JSON, and `"refused"` when the schema names a version this does not know.
 /// `side` says which of the two texts that was.
 pub fn check(schema : String, instance : String, draft : String) -> String {
-  let document = @json.parse(schema[:]) catch {
-    error => return fault_of("json", "schema", error.to_string())
+  let document = @json.loads(schema[:]) catch {
+    error => return fault_of("json", "schema", error.message())
   }
-  let value = @json.parse(instance[:]) catch {
-    error => return fault_of("json", "instance", error.to_string())
+  let value = @json.loads(instance[:]) catch {
+    error => return fault_of("json", "instance", error.message())
   }
   // The version is named by its `$schema` URI, which is also the value the
   // page's menu carries: unknown means the preset, exactly as `Schema::new`

@@ -9,72 +9,72 @@
 ///|
 test "a relative reference is merged onto the base's directory" {
   // `c.json` beside `b.json` is `.../dir/c.json`, not `.../c.json`.
-  let references = @json.parse(
+  let references = @json.loads(
     (
       #|{ "$id": "http://example.test/dir/root.json",
       #|  "$ref": "other.json" }
     ),
   )
   let remotes = {
-    "http://example.test/dir/other.json": @json.parse(
+    "http://example.test/dir/other.json": @json.loads(
       "{ \"type\": \"integer\" }",
     ),
   }
   let schema = @moonschema.Schema::new(references, remotes~)
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }
 
 ///|
 test "dot segments are taken out before the reference is looked up" {
-  let references = @json.parse(
+  let references = @json.loads(
     (
       #|{ "$id": "http://example.test/dir/root.json",
       #|  "$ref": "../lib/int.json" }
     ),
   )
   let remotes = {
-    "http://example.test/lib/int.json": @json.parse("{ \"type\": \"integer\" }"),
+    "http://example.test/lib/int.json": @json.loads("{ \"type\": \"integer\" }"),
   }
   let schema = @moonschema.Schema::new(references, remotes~)
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }
 
 ///|
 test "a network-path reference takes the base's scheme" {
-  let references = @json.parse(
+  let references = @json.loads(
     (
       #|{ "$id": "https://a.test/dir/root.json",
       #|  "$ref": "//b.test/int.json" }
     ),
   )
   let remotes = {
-    "https://b.test/int.json": @json.parse("{ \"type\": \"integer\" }"),
+    "https://b.test/int.json": @json.loads("{ \"type\": \"integer\" }"),
   }
   let schema = @moonschema.Schema::new(references, remotes~)
-  assert_eq(schema.valid(@json.parse("1")), true)
+  assert_eq(schema.valid(@json.loads("1")), true)
 }
 
 ///|
 test "an absolute reference stands on its own" {
-  let references = @json.parse(
+  let references = @json.loads(
     (
       #|{ "$id": "https://a.test/dir/root.json",
       #|  "$ref": "http://b.test/int.json" }
     ),
   )
   let remotes = {
-    "http://b.test/int.json": @json.parse("{ \"type\": \"integer\" }"),
+    "http://b.test/int.json": @json.loads("{ \"type\": \"integer\" }"),
   }
   let schema = @moonschema.Schema::new(references, remotes~)
-  assert_eq(schema.valid(@json.parse("1")), true)
+  assert_eq(schema.valid(@json.loads("1")), true)
 }
 
 ///|
 test "a fragment resolves inside the document it is in" {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$id": "http://example.test/root.json",
         #|  "$defs": { "int": { "type": "integer" } },
@@ -82,36 +82,36 @@ test "a fragment resolves inside the document it is in" {
       ),
     ),
   )
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }
 
 ///|
 test "a fragment with its slash percent-encoded is still a pointer" {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "properties": { "a name": { "type": "integer" } },
         #|  "$ref": "#/properties/a%20name" }
       ),
     ),
   )
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }
 
 ///|
 test "an anchor names a place without a pointer" {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$defs": { "int": { "$anchor": "count", "type": "integer" } },
         #|  "$ref": "#count" }
       ),
     ),
   )
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }
 
 ///|
@@ -119,7 +119,7 @@ test "a pointer's escapes are undone in the order that keeps a name whole" {
   // `~1` is a slash in a name and `~0` a tilde; undoing them the other way
   // round turns one name into two.
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "properties": { "a/b": { "type": "integer" }, "c~d": { "type": "integer" } },
         #|  "allOf": [
@@ -129,6 +129,6 @@ test "a pointer's escapes are undone in the order that keeps a name whole" {
       ),
     ),
   )
-  assert_eq(schema.valid(@json.parse("1")), true)
-  assert_eq(schema.valid(@json.parse("\"x\"")), false)
+  assert_eq(schema.valid(@json.loads("1")), true)
+  assert_eq(schema.valid(@json.loads("\"x\"")), false)
 }

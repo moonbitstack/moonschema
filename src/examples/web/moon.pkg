@@ -2,7 +2,7 @@
 // package is a library with a JavaScript export rather than an executable.
 import {
   "moonbitstack/moonschema",
-  "moonbitlang/core/json",
+  "moonbitstack/moonjson/json",
 }
 
 options(

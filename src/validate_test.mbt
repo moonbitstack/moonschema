@@ -12,7 +12,7 @@ fn schema(
   text : String,
   draft? : @moonschema.Draft,
 ) -> @moonschema.Schema raise {
-  @moonschema.Schema::new(@json.parse(text), draft?)
+  @moonschema.Schema::new(@json.loads(text), draft?)
 }
 
 ///|
@@ -24,10 +24,10 @@ test "an instance validates, or says why not" {
       #|  "required": ["name"] }
     ),
   )
-  assert_eq(person.valid(@json.parse("{\"name\": \"Leo\"}")), true)
-  assert_eq(person.faults(@json.parse("{\"name\": \"Leo\"}")), [])
+  assert_eq(person.valid(@json.loads("{\"name\": \"Leo\"}")), true)
+  assert_eq(person.faults(@json.loads("{\"name\": \"Leo\"}")), [])
   // The basic output: where in the instance, which keyword, and where that was.
-  let faults = person.faults(@json.parse("{\"name\": \"\"}"))
+  let faults = person.faults(@json.loads("{\"name\": \"\"}"))
   assert_eq(faults.length(), 1)
   assert_eq(faults[0].at, "/name")
   assert_eq(faults[0].keyword, "minLength")
@@ -37,7 +37,7 @@ test "an instance validates, or says why not" {
     "/name: shorter than allowed (minLength at /properties/name/minLength)",
   )
   // A missing member is a fault of the object, not of the member.
-  let missing = person.faults(@json.parse("{}"))
+  let missing = person.faults(@json.loads("{}"))
   assert_eq(missing[0].at, "")
   assert_eq(missing[0].keyword, "required")
 }
@@ -51,10 +51,10 @@ test "every reason is collected, not just the first" {
       #|  "required": ["c"] }
     ),
   )
-  let faults = strict.faults(@json.parse("{\"a\": \"x\", \"b\": true}"))
+  let faults = strict.faults(@json.loads("{\"a\": \"x\", \"b\": true}"))
   assert_eq(faults.length(), 3)
   // `valid` answers the same question and stops at the first reason.
-  assert_eq(strict.valid(@json.parse("{\"a\": \"x\", \"b\": true}")), false)
+  assert_eq(strict.valid(@json.loads("{\"a\": \"x\", \"b\": true}")), false)
 }
 
 ///|
@@ -67,8 +67,8 @@ test "the version a document names is the version it is read at" {
     ),
     draft=Draft2020,
   )
-  assert_eq(old.valid(@json.parse("10")), false)
-  assert_eq(old.valid(@json.parse("9")), true)
+  assert_eq(old.valid(@json.loads("10")), false)
+  assert_eq(old.valid(@json.loads("9")), true)
   // The same document read at 2020-12 means something else entirely: the flag
   // is not a number, so it asserts nothing and ten is allowed.
   let modern = schema(
@@ -77,7 +77,7 @@ test "the version a document names is the version it is read at" {
       #|  "maximum": 10, "exclusiveMaximum": true }
     ),
   )
-  assert_eq(modern.valid(@json.parse("10")), true)
+  assert_eq(modern.valid(@json.loads("10")), true)
 }
 
 ///|
@@ -94,17 +94,17 @@ test "a version nobody knows is refused, not guessed at" {
 
 ///|
 test "a reference reaches another document only when it is handed one" {
-  let document = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+  let document = @json.loads("{ \"$ref\": \"https://example.test/int\" }")
   let alone = @moonschema.Schema::new(document)
   // Nothing was fed, so the reference resolves to nothing and refuses.
-  assert_eq(alone.valid(@json.parse("1")), false)
-  assert_eq(alone.faults(@json.parse("1"))[0].keyword, "$ref")
+  assert_eq(alone.valid(@json.loads("1")), false)
+  assert_eq(alone.faults(@json.loads("1"))[0].keyword, "$ref")
   let remotes = {
-    "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
+    "https://example.test/int": @json.loads("{ \"type\": \"integer\" }"),
   }
   let fed = @moonschema.Schema::new(document, remotes~)
-  assert_eq(fed.valid(@json.parse("1")), true)
-  assert_eq(fed.valid(@json.parse("\"x\"")), false)
+  assert_eq(fed.valid(@json.loads("1")), true)
+  assert_eq(fed.valid(@json.loads("\"x\"")), false)
 }
 
 ///|

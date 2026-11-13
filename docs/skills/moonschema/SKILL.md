@@ -25,11 +25,11 @@ schema.
 
 ```moonbit
 let schema = @moonschema.Schema::new(
-  @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+  @json.loads("{ \"type\": \"object\", \"required\": [\"id\"] }"),
 )
-assert_eq(schema.valid(@json.parse("{\"id\": 1}")), true)
+assert_eq(schema.valid(@json.loads("{\"id\": 1}")), true)
 assert_eq(
-  schema.faults(@json.parse("{}"))[0].to_string(),
+  schema.faults(@json.loads("{}"))[0].to_string(),
   "the instance: missing id (required at /required)",
 )
 ```
@@ -43,9 +43,9 @@ starts from.
 
 ```moonbit
 let person = @moonschema.Schema::new(
-  @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+  @json.loads("{ \"type\": \"object\", \"required\": [\"id\"] }"),
 )
-let report = person.report(@json.parse("{}"), output=@moonschema.Output::Basic)
+let report = person.report(@json.loads("{}"), output=@moonschema.Output::Basic)
 assert_eq(report.valid, false)
 assert_eq(report.units[0].keyword_at, "/required")
 assert_eq(report.units[0].at, "")
@@ -57,11 +57,11 @@ Nothing is fetched. A reference to another document resolves only when the calle
 document in `remotes`, keyed by the URI the reference names; one that lands nowhere is a fault.
 
 ```moonbit
-let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+let remote = @json.loads("{ \"$ref\": \"https://example.test/int\" }")
 let fed = @moonschema.Schema::new(
   remote,
   remotes={
-    "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
+    "https://example.test/int": @json.loads("{ \"type\": \"integer\" }"),
   },
 )
 assert_eq(fed.valid(Json::number(2.0)), true)

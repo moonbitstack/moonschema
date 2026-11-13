@@ -10,7 +10,7 @@
 /// The schema and instance §12.4 uses for the first three formats.
 fn polygon() -> (@moonschema.Schema, Json) raise {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$id": "https://example.com/polygon",
         #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -28,7 +28,7 @@ fn polygon() -> (@moonschema.Schema, Json) raise {
       ),
     ),
   )
-  let instance = @json.parse(
+  let instance = @json.loads(
     (
       #|[ { "x": 2.5, "y": 1.3 },
       #|  { "x": 1, "z": 6.7 } ]
@@ -41,7 +41,7 @@ fn polygon() -> (@moonschema.Schema, Json) raise {
 /// One report as JSON text, with the keys in a fixed order so that a test can
 /// read it.
 fn text(report : @moonschema.Report) -> String {
-  report.to_json().stringify(indent=2)
+  @json.dumps(report.to_json(), indent=2)
 }
 
 ///|
@@ -65,7 +65,7 @@ test "flag says whether it validated and nothing else" {
     "{\n  \"valid\": false\n}",
   )
   let passing = schema.report(
-    @json.parse("[]"),
+    @json.loads("[]"),
     output=@moonschema.Output::Flag,
   )
   assert_eq(text(passing), "{\n  \"valid\": false\n}")
@@ -151,7 +151,7 @@ test "verbose keeps what passed as well as what failed" {
   // §12.4.4's smaller example: a schema with no `$id`, so there is no location
   // to dereference and none is given.
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "type": "object",
         #|  "properties": { "validProp": true },
@@ -160,7 +160,7 @@ test "verbose keeps what passed as well as what failed" {
     ),
   )
   let report = schema.report(
-    @json.parse("{ \"validProp\": 5, \"disallowedProp\": \"value\" }"),
+    @json.loads("{ \"validProp\": 5, \"disallowedProp\": \"value\" }"),
     output=@moonschema.Output::Verbose,
   )
   assert_eq(
@@ -200,8 +200,8 @@ test "verbose keeps what passed as well as what failed" {
 
 ///|
 test "a validation that held reports its annotations" {
-  let schema = @moonschema.Schema::new(@json.parse("{ \"readOnly\": true }"))
-  let report = schema.report(@json.parse("1"), output=@moonschema.Output::Basic)
+  let schema = @moonschema.Schema::new(@json.loads("{ \"readOnly\": true }"))
+  let report = schema.report(@json.loads("1"), output=@moonschema.Output::Basic)
   assert_eq(
     text(report),
     (
@@ -223,11 +223,11 @@ test "a validation that held reports its annotations" {
 ///|
 test "the flag output is the cheapest, and says the same thing" {
   let schema = @moonschema.Schema::new(
-    @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+    @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
   )
-  assert_eq(schema.report(@json.parse("7")).valid, true)
-  assert_eq(schema.report(@json.parse("0")).valid, false)
-  assert_eq(schema.report(@json.parse("0")).units.length(), 0)
+  assert_eq(schema.report(@json.loads("7")).valid, true)
+  assert_eq(schema.report(@json.loads("0")).valid, false)
+  assert_eq(schema.report(@json.loads("0")).units.length(), 0)
   assert_eq(@moonschema.output, @moonschema.Output::Flag)
 }
 
@@ -237,9 +237,9 @@ test "a keyword with one reason says it on its own unit" {
   // only reason is the keyword's own — same place in the schema, same place in
   // the instance — the unit carries it instead of enclosing it, and the verbose
   // format is where that shape is visible.
-  let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
+  let schema = @moonschema.Schema::new(@json.loads("{ \"type\": \"integer\" }"))
   let report = schema.report(
-    @json.parse("\"x\""),
+    @json.loads("\"x\""),
     output=@moonschema.Output::Verbose,
   )
   assert_eq(
@@ -260,7 +260,7 @@ test "a keyword with one reason says it on its own unit" {
   )
   // The same unit read flat: one entry, not an entry and a child under it.
   let flat = schema.report(
-    @json.parse("\"x\""),
+    @json.loads("\"x\""),
     output=@moonschema.Output::Basic,
   )
   assert_eq(flat.units.length(), 1)

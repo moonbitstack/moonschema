@@ -7,7 +7,7 @@
 ///|
 /// A schema from its JSON text, at a version of the caller's choosing.
 fn at(text : String, draft~ : @moonschema.Draft) -> @moonschema.Schema raise {
-  @moonschema.Schema::new(@json.parse(text), draft~)
+  @moonschema.Schema::new(@json.loads(text), draft~)
 }
 
 ///|
@@ -22,28 +22,28 @@ test "propertyDependencies picks the subschema by a property's value" {
     #|      "bank": { "$ref": "#/$defs/bank" } } } }
   let schema = at(document, draft=V1)
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"card\", \"cardNumber\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"card\", \"cardNumber\": 1}")),
     true,
   )
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"card\", \"account\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"card\", \"account\": 1}")),
     false,
   )
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"bank\", \"account\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"bank\", \"account\": 1}")),
     true,
   )
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"bank\", \"cardNumber\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"bank\", \"cardNumber\": 1}")),
     false,
   )
   // A value nobody depends on, and an instance without the property at all.
-  assert_eq(schema.valid(@json.parse("{\"kind\": \"cash\"}")), true)
-  assert_eq(schema.valid(@json.parse("{}")), true)
+  assert_eq(schema.valid(@json.loads("{\"kind\": \"cash\"}")), true)
+  assert_eq(schema.valid(@json.loads("{}")), true)
   // A value that is not a string is not a key into the inner object.
-  assert_eq(schema.valid(@json.parse("{\"kind\": 1}")), true)
+  assert_eq(schema.valid(@json.loads("{\"kind\": 1}")), true)
   let faults = schema.faults(
-    @json.parse("{\"kind\": \"card\", \"account\": 1}"),
+    @json.loads("{\"kind\": \"card\", \"account\": 1}"),
   )
   assert_eq(faults[0].keyword, "required")
   // The walk, not the target: it went through the keyword and through `$ref`.
@@ -59,7 +59,7 @@ test "propertyDependencies is v1's alone" {
     #|{ "propertyDependencies": { "kind": { "card": { "required": ["cardNumber"] } } } }
   for draft in [@moonschema.Draft::Draft2019, @moonschema.Draft::Draft2020] {
     let schema = at(document, draft~)
-    assert_eq(schema.valid(@json.parse("{\"kind\": \"card\"}")), true)
+    assert_eq(schema.valid(@json.loads("{\"kind\": \"card\"}")), true)
   }
 }
 
@@ -74,11 +74,11 @@ test "propertyDependencies leaves what it evaluated to unevaluatedProperties" {
     draft=V1,
   )
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"card\", \"number\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"card\", \"number\": 1}")),
     true,
   )
   assert_eq(
-    schema.valid(@json.parse("{\"kind\": \"card\", \"extra\": 1}")),
+    schema.valid(@json.loads("{\"kind\": \"card\", \"extra\": 1}")),
     false,
   )
 }
@@ -91,11 +91,11 @@ test "a decimal multiple stays a multiple when binary division says otherwise" {
   // if the division is read as the decimal one the document wrote, so the
   // remainder the representation leaves behind is allowed for here.
   let tenth = at("{ \"multipleOf\": 0.1 }", draft=@moonschema.Draft::Draft2020)
-  assert_eq(tenth.valid(@json.parse("0.3")), true)
-  assert_eq(tenth.valid(@json.parse("0.35")), false)
+  assert_eq(tenth.valid(@json.loads("0.3")), true)
+  assert_eq(tenth.valid(@json.loads("0.35")), false)
   let small = at(
     "{ \"multipleOf\": 0.0001 }",
     draft=@moonschema.Draft::Draft2020,
   )
-  assert_eq(small.valid(@json.parse("0.0075")), true)
+  assert_eq(small.valid(@json.loads("0.0075")), true)
 }

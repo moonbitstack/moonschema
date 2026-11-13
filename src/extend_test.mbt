@@ -91,7 +91,7 @@ fn counting() -> @moonschema.Registry raise {
 /// A metaschema that declares the vocabulary, with `wanted` beside it.
 fn declaring(wanted : Bool) -> Json raise {
   let flag = if wanted { "true" } else { "false" }
-  @json.parse(
+  @json.loads(
     (
       #|{ "$id": "https://example.test/meta",
       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -108,7 +108,7 @@ fn declaring(wanted : Bool) -> Json raise {
 test "a keyword from a vocabulary in force asserts" {
   let remotes = { "https://example.test/meta": declaring(true) }
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$schema": "https://example.test/meta", "x-even": true }
       ),
@@ -116,9 +116,9 @@ test "a keyword from a vocabulary in force asserts" {
     remotes~,
     registry=counting(),
   )
-  assert_eq(schema.valid(@json.parse("4")), true)
-  assert_eq(schema.valid(@json.parse("5")), false)
-  let faults = schema.faults(@json.parse("5"))
+  assert_eq(schema.valid(@json.loads("4")), true)
+  assert_eq(schema.valid(@json.loads("5")), false)
+  let faults = schema.faults(@json.loads("5"))
   assert_eq(faults[0].keyword, "x-even")
   assert_eq(faults[0].message, "odd")
   // A reader with no such vocabulary reads the document only because the
@@ -126,19 +126,19 @@ test "a keyword from a vocabulary in force asserts" {
   // the document one this cannot read.
   let optional = { "https://example.test/meta": declaring(false) }
   let plain = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       "{ \"$schema\": \"https://example.test/meta\", \"x-even\": true }",
     ),
     remotes=optional,
   )
-  assert_eq(plain.valid(@json.parse("5")), true)
+  assert_eq(plain.valid(@json.loads("5")), true)
 }
 
 ///|
 test "a vocabulary declared optional annotates and asserts nothing" {
   let remotes = { "https://example.test/meta": declaring(false) }
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$schema": "https://example.test/meta", "x-even": true, "x-tagged": "here" }
       ),
@@ -146,8 +146,8 @@ test "a vocabulary declared optional annotates and asserts nothing" {
     remotes~,
     registry=counting(),
   )
-  assert_eq(schema.valid(@json.parse("5")), true)
-  let report = schema.report(@json.parse("5"), output=@moonschema.Output::Basic)
+  assert_eq(schema.valid(@json.loads("5")), true)
+  let report = schema.report(@json.loads("5"), output=@moonschema.Output::Basic)
   let tagged = report.units.search_by(fn(unit) {
     unit.keyword_at == "/x-tagged"
   })
@@ -160,7 +160,7 @@ test "a vocabulary declared optional annotates and asserts nothing" {
 
 ///|
 test "a vocabulary the document requires and nobody holds is refused" {
-  let document = @json.parse(
+  let document = @json.loads(
     (
       #|{ "$schema": "https://example.test/meta" }
     ),

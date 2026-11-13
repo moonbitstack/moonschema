@@ -103,7 +103,7 @@ pub extend Verdict with Debug::{to_repr}
 /// pub extend ParityVocabulary with @moonschema.Vocabulary::{uri, keywords}
 ///
 /// test {
-///   let metaschema = @json.parse(
+///   let metaschema = @json.loads(
 ///     (
 ///       #|{ "$id": "https://example.test/meta",
 ///       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -115,7 +115,7 @@ pub extend Verdict with Debug::{to_repr}
 ///   let registry = @moonschema.Registry::new()
 ///   registry.add(ParityVocabulary::{ })
 ///   let schema = @moonschema.Schema::new(
-///     @json.parse(
+///     @json.loads(
 ///       (
 ///         #|{ "$schema": "https://example.test/meta",
 ///         #|  "type": "integer", "x-parity": true }
@@ -124,8 +124,8 @@ pub extend Verdict with Debug::{to_repr}
 ///     remotes={ "https://example.test/meta": metaschema },
 ///     registry~,
 ///   )
-///   assert_eq(schema.valid(@json.parse("4")), true)
-///   assert_eq(schema.faults(@json.parse("5"))[0].message, "odd")
+///   assert_eq(schema.valid(@json.loads("4")), true)
+///   assert_eq(schema.faults(@json.loads("5"))[0].message, "odd")
 /// }
 /// ```
 pub(open) trait Keyword {

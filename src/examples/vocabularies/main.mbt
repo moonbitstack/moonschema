@@ -75,7 +75,7 @@ pub extend Measures with @moonschema.Vocabulary::{uri, keywords}
 fn main raise {
   // A metaschema is a document like any other: this one says it is written
   // against 2020-12 and that it wants the measures vocabulary.
-  let metaschema = @json.parse(
+  let metaschema = @json.loads(
     (
       #|{ "$id": "https://example.test/meta",
       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -88,7 +88,7 @@ fn main raise {
   let registry = @moonschema.Registry::new()
   registry.add(Measures::{ })
 
-  let document = @json.parse(
+  let document = @json.loads(
     (
       #|{ "$schema": "https://example.test/meta",
       #|  "type": "number", "x-units": 2 }
@@ -97,7 +97,7 @@ fn main raise {
   let schema = @moonschema.Schema::new(document, remotes~, registry~)
   // Three places is a whole number of hundredths; 1.234 is not.
   for text in ["1.25", "1.234"] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("\{text}  \{schema.valid(instance)}")
     for fault in schema.faults(instance) {
       println("  " + fault.to_string())

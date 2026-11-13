@@ -126,8 +126,8 @@ test "every keyword a fault can name is the end of its own path" {
   ]
   for row in rows {
     let (text, instance, keyword) = row
-    let faults = @moonschema.Schema::new(@json.parse(text)).faults(
-      @json.parse(instance),
+    let faults = @moonschema.Schema::new(@json.loads(text)).faults(
+      @json.loads(instance),
     )
     assert_eq(faults.length() > 0, true)
     for fault in faults {
@@ -142,14 +142,14 @@ test "the keyword a fault names is the end of the walk, not the end of a branch"
   // The walk goes through `$ref` and through `properties`; the keyword that
   // refused the value is `minimum`, three steps after the route began.
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$defs": { "port": { "type": "integer", "minimum": 1 } },
         #|  "properties": { "port": { "$ref": "#/$defs/port" } } }
       ),
     ),
   )
-  let faults = schema.faults(@json.parse("{\"port\": 0}"))
+  let faults = schema.faults(@json.loads("{\"port\": 0}"))
   assert_eq(faults.length(), 1)
   assert_eq(faults[0].keyword, "minimum")
   assert_eq(faults[0].schema_at, "/properties/port/$ref/minimum")
@@ -159,7 +159,7 @@ test "the keyword a fault names is the end of the walk, not the end of a branch"
 ///|
 test "a property name with a pointer's punctuation is escaped in the path" {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "properties": {
         #|    "a/b": { "type": "integer" },
@@ -167,10 +167,10 @@ test "a property name with a pointer's punctuation is escaped in the path" {
       ),
     ),
   )
-  let slash = schema.faults(@json.parse("{\"a/b\": \"x\"}"))
+  let slash = schema.faults(@json.loads("{\"a/b\": \"x\"}"))
   assert_eq(slash[0].keyword, "type")
   assert_eq(slash[0].schema_at, "/properties/a~1b/type")
-  let tilde = schema.faults(@json.parse("{\"m~n\": {}}"))
+  let tilde = schema.faults(@json.loads("{\"m~n\": {}}"))
   assert_eq(tilde[0].keyword, "required")
   assert_eq(tilde[0].schema_at, "/properties/m~0n/required")
 }

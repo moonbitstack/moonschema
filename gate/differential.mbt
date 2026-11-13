@@ -29,7 +29,7 @@ fn measure_differential() -> Tally {
       return tally
     }
   }
-  let document = @json.parse(text) catch {
+  let document = @json.loads(text) catch {
     _ => {
       tally.first.push(vectors + ": unreadable")
       return tally

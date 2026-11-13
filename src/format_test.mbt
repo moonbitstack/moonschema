@@ -11,25 +11,25 @@ fn reads(
   draft? : @moonschema.Draft,
   format? : Bool,
 ) -> @moonschema.Schema raise {
-  @moonschema.Schema::new(@json.parse(text), draft?, format?)
+  @moonschema.Schema::new(@json.loads(text), draft?, format?)
 }
 
 ///|
 test "an annotation says nothing about validity unless it is asked to" {
   let document = "{ \"format\": \"ipv4\" }"
   let quiet = reads(document)
-  assert_eq(quiet.valid(@json.parse("\"not-an-ipv4\"")), true)
+  assert_eq(quiet.valid(@json.loads("\"not-an-ipv4\"")), true)
   let loud = reads(document, format=true)
-  assert_eq(loud.valid(@json.parse("\"not-an-ipv4\"")), false)
-  assert_eq(loud.valid(@json.parse("\"127.0.0.1\"")), true)
-  let faults = loud.faults(@json.parse("\"not-an-ipv4\""))
+  assert_eq(loud.valid(@json.loads("\"not-an-ipv4\"")), false)
+  assert_eq(loud.valid(@json.loads("\"127.0.0.1\"")), true)
+  let faults = loud.faults(@json.loads("\"not-an-ipv4\""))
   assert_eq(faults[0].keyword, "format")
   assert_eq(faults[0].message, "not a valid ipv4")
 }
 
 ///|
 test "a metaschema that declares the assertion vocabulary turns it on" {
-  let metaschema = @json.parse(
+  let metaschema = @json.loads(
     (
       #|{ "$id": "https://example.test/meta",
       #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -40,18 +40,18 @@ test "a metaschema that declares the assertion vocabulary turns it on" {
   )
   let remotes = { "https://example.test/meta": metaschema }
   let asserting = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$schema": "https://example.test/meta", "format": "ipv4" }
       ),
     ),
     remotes~,
   )
-  assert_eq(asserting.valid(@json.parse("\"not-an-ipv4\"")), false)
+  assert_eq(asserting.valid(@json.loads("\"not-an-ipv4\"")), false)
   // The caller can still turn it off: what a call says outranks what a dialect
   // says, which outranks what the version says.
   let off = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "$schema": "https://example.test/meta", "format": "ipv4" }
       ),
@@ -59,7 +59,7 @@ test "a metaschema that declares the assertion vocabulary turns it on" {
     remotes~,
     format=false,
   )
-  assert_eq(off.valid(@json.parse("\"not-an-ipv4\"")), true)
+  assert_eq(off.valid(@json.loads("\"not-an-ipv4\"")), true)
 }
 
 ///|
@@ -69,7 +69,7 @@ test "v1 asserts without being asked, and refuses a format it cannot read" {
       #|{ "$schema": "https://json-schema.org/v1", "format": "ipv4" }
     ),
   )
-  assert_eq(schema.valid(@json.parse("\"not-an-ipv4\"")), false)
+  assert_eq(schema.valid(@json.loads("\"not-an-ipv4\"")), false)
   // The specification makes an unsupported format a schema not to process at
   // all, rather than a keyword to pass over.
   let refused = try {
@@ -92,7 +92,7 @@ test "v1 asserts without being asked, and refuses a format it cannot read" {
     draft=@moonschema.Draft::Draft2020,
     format=true,
   )
-  assert_eq(older.valid(@json.parse("\"anything\"")), true)
+  assert_eq(older.valid(@json.loads("\"anything\"")), true)
 }
 
 ///|
@@ -102,19 +102,19 @@ test "a time is not a leap second where a time has no date to say which" {
   let v1 = @moonschema.Draft::V1
   assert_eq(
     reads("{ \"format\": \"time\" }", draft=v1).valid(
-      @json.parse("\"23:59:60Z\""),
+      @json.loads("\"23:59:60Z\""),
     ),
     false,
   )
   assert_eq(
     reads("{ \"format\": \"date-time\" }", draft=v1).valid(
-      @json.parse("\"1998-12-31T23:59:60Z\""),
+      @json.loads("\"1998-12-31T23:59:60Z\""),
     ),
     true,
   )
   assert_eq(
     reads("{ \"format\": \"time\" }", draft=@moonschema.Draft::Draft2020).valid(
-      @json.parse("\"23:59:60Z\""),
+      @json.loads("\"23:59:60Z\""),
     ),
     true,
   )
@@ -161,7 +161,7 @@ test "each name answers the shape it names" {
       draft=@moonschema.Draft::Draft2020,
       format=true,
     )
-    let got = schema.valid(@json.parse(instance))
+    let got = schema.valid(@json.loads(instance))
     if got != want {
       fail("format " + name + " read " + instance + " as " + got.to_string())
     }
@@ -174,6 +174,6 @@ test "a format answers about strings and nothing else" {
   // here names strings, so every other type passes.
   let schema = reads("{ \"format\": \"ipv4\" }", format=true)
   for instance in ["12", "13.7", "{}", "[]", "false", "null"] {
-    assert_eq(schema.valid(@json.parse(instance)), true)
+    assert_eq(schema.valid(@json.loads(instance)), true)
   }
 }

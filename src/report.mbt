@@ -88,9 +88,9 @@ fn annotation_of(keyword : String, value : Json) -> Json? {
 /// ```moonbit check
 /// test {
 ///   let schema = @moonschema.Schema::new(
-///     @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+///     @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
 ///   )
-///   let report = schema.report(@json.parse("0"), output=@moonschema.Output::Basic)
+///   let report = schema.report(@json.loads("0"), output=@moonschema.Output::Basic)
 ///   assert_eq(report.valid, false)
 ///   assert_eq(report.units[0].keyword_at, "/minimum")
 ///   assert_eq(report.units[0].error, Some("below the minimum"))

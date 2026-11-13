@@ -3,4 +3,5 @@ pkgtype(kind: "executable")
 
 import {
   "moonbitstack/moonschema",
+  "moonbitstack/moonjson/json",
 }

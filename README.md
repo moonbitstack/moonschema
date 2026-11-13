@@ -23,7 +23,7 @@ moon add moonbitstack/moonschema
 ```moonbit
 fn main raise {
   let schema = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "type": "object",
         #|  "properties": { "port": { "type": "integer", "minimum": 1 } },
@@ -31,8 +31,8 @@ fn main raise {
       ),
     ),
   )
-  assert_eq(schema.valid(@json.parse("{\"port\": 8080}")), true)
-  let faults = schema.faults(@json.parse("{\"port\": 0}"))
+  assert_eq(schema.valid(@json.loads("{\"port\": 8080}")), true)
+  let faults = schema.faults(@json.loads("{\"port\": 0}"))
   assert_eq(faults.length(), 1)
   assert_eq(
     faults[0].to_string(),
@@ -84,8 +84,8 @@ with more or less of itself. `Report::to_json` writes the object §12.4 describe
 </table>
 
 ```moonbit
-let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
-let report = schema.report(@json.parse("\"seven\""), output=@moonschema.Output::Basic)
+let schema = @moonschema.Schema::new(@json.loads("{ \"type\": \"integer\" }"))
+let report = schema.report(@json.loads("\"seven\""), output=@moonschema.Output::Basic)
 assert_eq(
   report.to_json().stringify(indent=2),
   #|{
@@ -115,11 +115,11 @@ keyword an annotation, so it says nothing about validity unless you ask:
 
 ```moonbit
 let schema = @moonschema.Schema::new(
-  @json.parse("{ \"format\": \"ipv4\" }"),
+  @json.loads("{ \"format\": \"ipv4\" }"),
   format=true,
 )
-assert_eq(schema.valid(@json.parse("\"not-an-ipv4\"")), false)
-assert_eq(schema.valid(@json.parse("\"10.0.0.1\"")), true)
+assert_eq(schema.valid(@json.loads("\"not-an-ipv4\"")), false)
+assert_eq(schema.valid(@json.loads("\"10.0.0.1\"")), true)
 ```
 
 The argument is optional, and leaving it out lets the document answer: an annotation unless its
@@ -172,11 +172,11 @@ handed over does not resolve, and a reference that lands nowhere is a fault rath
 pass.
 
 ```moonbit
-let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+let remote = @json.loads("{ \"$ref\": \"https://example.test/int\" }")
 let schema = @moonschema.Schema::new(
   remote,
   remotes={
-    "https://example.test/int": @json.parse("{ \"type\": \"integer\" }"),
+    "https://example.test/int": @json.loads("{ \"type\": \"integer\" }"),
   },
 )
 assert_eq(schema.valid(Json::number(1.0)), true)
@@ -234,7 +234,7 @@ What puts the vocabulary in force is the document's own metaschema, handed over 
 document:
 
 ```moonbit
-let metaschema = @json.parse(
+let metaschema = @json.loads(
   (
     #|{ "$id": "https://example.test/meta",
     #|  "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -247,7 +247,7 @@ let remotes = { "https://example.test/meta": metaschema }
 let registry = @moonschema.Registry::new()
 registry.add(Counting::{  })
 let schema = @moonschema.Schema::new(
-  @json.parse(
+  @json.loads(
     (
       #|{ "$schema": "https://example.test/meta",
       #|  "type": "integer", "x-even": true }
@@ -256,9 +256,9 @@ let schema = @moonschema.Schema::new(
   remotes~,
   registry~,
 )
-assert_eq(schema.valid(@json.parse("4")), true)
+assert_eq(schema.valid(@json.loads("4")), true)
 assert_eq(
-  schema.faults(@json.parse("5"))[0].to_string(),
+  schema.faults(@json.loads("5"))[0].to_string(),
   "the instance: odd (x-even at /x-even)",
 )
 ```

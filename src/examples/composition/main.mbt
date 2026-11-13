@@ -10,7 +10,7 @@ fn main raise {
   // `allOf` applies every branch and reports every branch that refused, so a
   // value can fail twice for two different reasons.
   let summed = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "allOf": [
@@ -24,7 +24,7 @@ fn main raise {
   )
   println("allOf — an integer from 1 to 10:")
   for instance in [Json::number(5.0), Json::number(0.0), Json::number(11.0)] {
-    println("  \{instance.stringify()}  ->  \{summed.valid(instance)}")
+    println("  \{@json.dumps(instance)}  ->  \{summed.valid(instance)}")
     for fault in summed.faults(instance) {
       println("      " + fault.to_string())
     }
@@ -34,7 +34,7 @@ fn main raise {
   // fault of the instance: only every branch failing is. So the answer is one
   // fault, not the reasons of each branch.
   let either = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "anyOf": [ { "type": "string" }, { "type": "integer" } ] }
       ),
@@ -42,7 +42,7 @@ fn main raise {
   )
   println("\nanyOf — a string or an integer:")
   for instance in [Json::string("x"), Json::boolean(true)] {
-    println("  \{instance.stringify()}  ->  \{either.valid(instance)}")
+    println("  \{@json.dumps(instance)}  ->  \{either.valid(instance)}")
     for fault in either.faults(instance) {
       println("      " + fault.to_string())
     }
@@ -51,7 +51,7 @@ fn main raise {
   // `oneOf` wants exactly one branch. Two branches matching is its own fault,
   // and the message says how many did.
   let exactly = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{ "oneOf": [ { "type": "integer" }, { "minimum": 0 } ] }
       ),
@@ -59,7 +59,7 @@ fn main raise {
   )
   println("\noneOf — an integer, or a number from 0 up:")
   for instance in [Json::number(-2.0), Json::number(3.0)] {
-    println("  \{instance.stringify()}  ->  \{exactly.valid(instance)}")
+    println("  \{@json.dumps(instance)}  ->  \{exactly.valid(instance)}")
     for fault in exactly.faults(instance) {
       println("      " + fault.to_string())
     }
@@ -68,7 +68,7 @@ fn main raise {
   // `if` never fails on its own: it picks the branch, and the reasons come from
   // whichever branch it picked.
   let shipping = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "type": "object",
@@ -88,7 +88,7 @@ fn main raise {
       "{\"country\": \"US\", \"postcode\": \"94107\"}", "{\"country\": \"US\", \"postcode\": \"9410\"}",
       "{\"country\": \"NL\", \"postcode\": \"10\"}",
     ] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("  \{text}")
     println("      -> \{shipping.valid(instance)}")
     for fault in shipping.faults(instance) {
@@ -101,7 +101,7 @@ fn main raise {
   // it the way to close a composed object. Nothing evaluated `email`, so it is
   // the one that fails.
   let closed = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "allOf": [
@@ -120,7 +120,7 @@ fn main raise {
     text in [
       "{\"name\": \"Ada\", \"age\": 36}", "{\"name\": \"Ada\", \"email\": \"a@b.test\"}",
     ] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("  \{text}  ->  \{closed.valid(instance)}")
     for fault in closed.faults(instance) {
       println("      " + fault.to_string())
@@ -131,7 +131,7 @@ fn main raise {
   // a name one of the patterns matched belongs to it, and only the rest is
   // "additional".
   let headers = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "type": "object",
@@ -146,7 +146,7 @@ fn main raise {
     text in [
       "{\"x-trace\": \"abc\", \"retries\": 3}", "{\"x-trace\": 1, \"retries\": \"three\"}",
     ] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("  \{text}  ->  \{headers.valid(instance)}")
     for fault in headers.faults(instance) {
       println("      " + fault.to_string())

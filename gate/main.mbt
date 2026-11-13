@@ -220,7 +220,7 @@ fn measure(run : Run, remotes : Map[String, Json]) -> Tally {
     let text = @fs.read_file_to_string(root + "/" + file) catch {
       _ => continue
     }
-    let groups = @json.parse(text) catch {
+    let groups = @json.loads(text) catch {
       _ => {
         tally.first.push(file + ": unreadable")
         continue
@@ -317,7 +317,7 @@ fn load_remotes() -> Map[String, Json] {
         continue
       }
     }
-    match (@json.parse(text) catch { _ => continue }) {
+    match (@json.loads(text) catch { _ => continue }) {
       document => remotes[name.0] = document
     }
   }
@@ -332,7 +332,7 @@ fn load_remotes() -> Map[String, Json] {
   for published in output_schemas {
     let path = suite + "/output-tests/" + published.1
     let text = @fs.read_file_to_string(path) catch { _ => continue }
-    match (@json.parse(text) catch { _ => continue }) {
+    match (@json.loads(text) catch { _ => continue }) {
       document => remotes[published.0] = document
     }
   }
@@ -408,7 +408,7 @@ fn gather(
       gather(path, uri, remotes)
     } else if entry.has_suffix(".json") {
       let text = @fs.read_file_to_string(path) catch { _ => continue }
-      match (@json.parse(text) catch { _ => continue }) {
+      match (@json.loads(text) catch { _ => continue }) {
         document => remotes[uri] = document
       }
     }
@@ -498,7 +498,7 @@ fn measure_outputs(
     let text = @fs.read_file_to_string(root + "/" + file) catch {
       _ => continue
     }
-    let groups = @json.parse(text) catch {
+    let groups = @json.loads(text) catch {
       _ => {
         tally.first.push(file + ": unreadable")
         continue

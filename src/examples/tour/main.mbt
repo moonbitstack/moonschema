@@ -46,7 +46,7 @@ fn main {
   }
   for instance in ([{ "port": 12000 }, { "port": 0 }, {}] : Array[Json]) {
     println(
-      instance.stringify() + "  ->  " + schema.valid(instance).to_string(),
+      @json.dumps(instance) + "  ->  " + schema.valid(instance).to_string(),
     )
     for fault in schema.faults(instance) {
       println("    " + fault.to_string())

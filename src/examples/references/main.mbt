@@ -10,7 +10,7 @@ fn main raise {
   // A `$defs` entry and a `$ref` to it. The fault names the place in the
   // instance and the place in the schema, so a message can point at both.
   let order = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "$defs": { "port": { "type": "integer", "minimum": 1, "maximum": 65535 } },
@@ -23,10 +23,10 @@ fn main raise {
   )
   for
     instance in [
-      @json.parse("{\"port\": 8080}"),
-      @json.parse("{\"port\": 70000}"),
+      @json.loads("{\"port\": 8080}"),
+      @json.loads("{\"port\": 70000}"),
     ] {
-    println("\{instance.stringify()}  ->  \{order.valid(instance)}")
+    println("\{@json.dumps(instance)}  ->  \{order.valid(instance)}")
     for fault in order.faults(instance) {
       println("    " + fault.to_string())
     }
@@ -37,7 +37,7 @@ fn main raise {
   // relative name, so it lands at https://example.test/money — beside the
   // document, not inside it.
   let nested = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "$id": "https://example.test/order",
@@ -60,7 +60,7 @@ fn main raise {
     text in [
       "{\"total\": {\"cents\": 1250}}", "{\"total\": {\"cents\": \"12.50\"}}",
     ] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("  \{text}  ->  \{nested.valid(instance)}")
     for fault in nested.faults(instance) {
       println("      " + fault.to_string())
@@ -70,7 +70,7 @@ fn main raise {
   // An `$anchor` names a place inside a document by a plain word, which is
   // what a reference written by hand usually wants.
   let anchored = @moonschema.Schema::new(
-    @json.parse(
+    @json.loads(
       (
         #|{
         #|  "$id": "https://example.test/customer",
@@ -82,7 +82,7 @@ fn main raise {
   )
   println("\nanchor:")
   for text in ["{\"name\": \"Ada\"}", "{\"name\": \"\"}"] {
-    let instance = @json.parse(text)
+    let instance = @json.loads(text)
     println("  \{text}  ->  \{anchored.valid(instance)}")
     for fault in anchored.faults(instance) {
       println("      " + fault.to_string())
@@ -93,7 +93,7 @@ fn main raise {
   // hands that document over: this opens no sockets, so what is not fed to it
   // does not exist. Nothing is fetched, and a reference that lands nowhere is a
   // fault rather than a silent pass.
-  let remote = @json.parse("{ \"$ref\": \"https://example.test/int\" }")
+  let remote = @json.loads("{ \"$ref\": \"https://example.test/int\" }")
   let alone = @moonschema.Schema::new(remote)
   println("\nwith nothing fed to it:")
   println("  1  ->  \{alone.valid(Json::number(1.0))}")
@@ -101,13 +101,13 @@ fn main raise {
     println("      " + fault.to_string())
   }
   let fed = @moonschema.Schema::new(remote, remotes={
-    "https://example.test/int": @json.parse(
+    "https://example.test/int": @json.loads(
       "{ \"type\": \"integer\", \"minimum\": 0 }",
     ),
   })
   println("\nwith the document fed in:")
   for instance in [Json::number(1.0), Json::number(-1.0)] {
-    println("  \{instance.stringify()}  ->  \{fed.valid(instance)}")
+    println("  \{@json.dumps(instance)}  ->  \{fed.valid(instance)}")
     for fault in fed.faults(instance) {
       println("      " + fault.to_string())
     }

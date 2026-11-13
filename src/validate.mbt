@@ -141,10 +141,10 @@ pub struct Schema {
 /// ```moonbit check
 /// test {
 ///   let schema = @moonschema.Schema::new(
-///     @json.parse("{ \"type\": \"object\", \"required\": [\"id\"] }"),
+///     @json.loads("{ \"type\": \"object\", \"required\": [\"id\"] }"),
 ///   )
-///   assert_eq(schema.valid(@json.parse("{\"id\": 1}")), true)
-///   assert_eq(schema.valid(@json.parse("{}")), false)
+///   assert_eq(schema.valid(@json.loads("{\"id\": 1}")), true)
+///   assert_eq(schema.valid(@json.loads("{}")), false)
 /// }
 /// ```
 pub fn Schema::new(
@@ -239,9 +239,9 @@ pub fn Schema::new(
 ///
 /// ```moonbit check
 /// test {
-///   let schema = @moonschema.Schema::new(@json.parse("{ \"type\": \"integer\" }"))
-///   assert_eq(schema.valid(@json.parse("7")), true)
-///   assert_eq(schema.valid(@json.parse("\"seven\"")), false)
+///   let schema = @moonschema.Schema::new(@json.loads("{ \"type\": \"integer\" }"))
+///   assert_eq(schema.valid(@json.loads("7")), true)
+///   assert_eq(schema.valid(@json.loads("\"seven\"")), false)
 /// }
 /// ```
 pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
@@ -261,9 +261,9 @@ pub fn Schema::valid(self : Schema, instance : Json) -> Bool {
 /// ```moonbit check
 /// test {
 ///   let schema = @moonschema.Schema::new(
-///     @json.parse("{ \"type\": \"integer\", \"minimum\": 1 }"),
+///     @json.loads("{ \"type\": \"integer\", \"minimum\": 1 }"),
 ///   )
-///   let faults = schema.faults(@json.parse("0"))
+///   let faults = schema.faults(@json.loads("0"))
 ///   assert_eq(faults.length(), 1)
 ///   assert_eq(faults[0].at, "")
 ///   assert_eq(faults[0].keyword, "minimum")
