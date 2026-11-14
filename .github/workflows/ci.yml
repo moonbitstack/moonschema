@@ -111,3 +111,8 @@ jobs:
         run: |
           python3 scripts/gen_conformance.py gate.log
           git diff --exit-code README.md docs/guide.html
+
+      # Each decision is broken once, and the test named for it has to go red: a unit test, or a
+      # case of the suite above, which is why this lives in the job that has the suite.
+      - name: every decision is caught by a test when broken
+        run: python3 scripts/mutation_check.py
