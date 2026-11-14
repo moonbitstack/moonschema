@@ -99,3 +99,30 @@ test "a decimal multiple stays a multiple when binary division says otherwise" {
   )
   assert_eq(small.valid(@json.loads("0.0075")), true)
 }
+
+///|
+test "contains is not a keyword in draft-04" {
+  let text = "{\"contains\": {\"const\": 1}}"
+  assert_eq(at(text, draft=Draft4).valid(@json.loads("[2]")), true)
+  // draft-06 brought it in.
+  assert_eq(at(text, draft=Draft6).valid(@json.loads("[2]")), false)
+}
+
+///|
+test "minContains and maxContains are not keywords before 2019-09" {
+  let text = "{\"contains\": {\"const\": 1}, \"minContains\": 2, \"maxContains\": 2}"
+  // draft-07 reads `contains` alone: one match is enough, and three are not too many.
+  assert_eq(at(text, draft=Draft7).valid(@json.loads("[1]")), true)
+  assert_eq(at(text, draft=Draft7).valid(@json.loads("[1, 1, 1]")), true)
+  assert_eq(at(text, draft=Draft2019).valid(@json.loads("[1]")), false)
+  assert_eq(at(text, draft=Draft2019).valid(@json.loads("[1, 1, 1]")), false)
+}
+
+///|
+test "dependencies is not a keyword from 2019-09" {
+  let text = "{\"dependencies\": {\"a\": [\"b\"]}}"
+  assert_eq(at(text, draft=Draft7).valid(@json.loads("{\"a\": 1}")), false)
+  // 2019-09 split it into `dependentRequired` and `dependentSchemas`.
+  assert_eq(at(text, draft=Draft2019).valid(@json.loads("{\"a\": 1}")), true)
+  assert_eq(at(text, draft=Draft2020).valid(@json.loads("{\"a\": 1}")), true)
+}
