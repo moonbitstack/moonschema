@@ -9,3 +9,6 @@ target/
 # metaschemas it feeds the validator, and the specification and official test
 # suite as submodules. It measures the library; it is not part of it.
 gate/
+
+# Examples are read in the repository and run in CI; they do not ship.
+src/examples/
